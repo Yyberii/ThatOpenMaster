@@ -16,24 +16,53 @@ constructor (container: HTMLElement) {
   }
 
   newProject(data: IProject) {
-    const projectNames = this.list.map((project) => { 
+    const projectNames = this.list.map((project) => {
       return project.name
     })
     const nameInUse = projectNames.includes(data.name)
     if (nameInUse) {
-      throw new Error(`A project with the name "${data.name}" already exists.`)
+      throw new Error(`A project with the name "${data.name}" already exists`)
     }
     const project = new Project(data)
     project.ui.addEventListener("click", () => {
-      const projectsPage= document.getElementById("projects-page")
-      const detailsPage= document.getElementById("project-details")
-      if (!(projectsPage || detailsPage)) {return}
+      const projectsPage = document.getElementById("projects-page")
+      const detailsPage = document.getElementById("project-details")
+      if (!(projectsPage && detailsPage)) { return }
       projectsPage.style.display = "none"
       detailsPage.style.display = "flex"
+      this.setDetailsPage(project)
+      this.setDashBoard(project)
     })
     this.ui.append(project.ui)
     this.list.push(project)
     return project
+  }
+
+
+  private setDetailsPage(project: Project) {
+    const detailsPage = document.getElementById("project-details")
+    if (!detailsPage) { return }
+    const name = detailsPage.querySelector("[data-project-info='name']")
+    if (name) { name.textContent = project.name }
+    const description = detailsPage.querySelector("[data-project-info='description']")
+    if (description) { description.textContent = project.description }
+  }
+
+  private setDashBoard(project: Project) {
+    const detailsPage = document.getElementById("project-dashboard")
+    if (!detailsPage) { return }
+    const name = detailsPage.querySelector("[data-project-info='name']")
+    if (name) { name.textContent = project.name }
+    const description = detailsPage.querySelector("[data-project-info='description']")
+    if (description) { description.textContent = project.description }
+    const status = detailsPage.querySelector("[data-project-info='status']")
+    if (status) { status.textContent = project.status }
+    const cost = detailsPage.querySelector("[data-project-info='cost']")
+    if (cost) { cost.textContent = project.cost.toString() }
+    const role = detailsPage.querySelector("[data-project-info='role']")
+    if (role) { role.textContent = project.userRole }
+    const finishDate = detailsPage.querySelector("[data-project-info='finishDate']")
+    if (finishDate) { finishDate.textContent = project.finishDate.toISOString().split('T')[0] }
   }
 
   getProject(id: string) {
