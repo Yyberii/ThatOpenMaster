@@ -27,10 +27,8 @@ export class Project implements IProject {
 
   constructor(data: IProject) {
     for (const key in data) {
-      if (!(key in this)) continue ;
-       this[key] = data[key]
+      this[key] = data[key]
     }
-    //project data definition
     this.id = uuidv4()
     this.setUI()
   }
