@@ -1,5 +1,6 @@
 import { IProject, ProjectStatus, UserRole } from "./class/Project"
 import { ProjectsManager } from "./class/ProjectsManager"
+import { ErrorModal } from "./class/ErrorModal"
 
 function toggleModal(id: string) {
     const modal =  document.getElementById(id)
@@ -34,6 +35,8 @@ if (newProjectBtn){
     console.warn("NewProjectBtn not found")
 }
 
+const errorModal = new ErrorModal("error-msg")
+
 const projectForm = document.getElementById("new-project-form")
 if (projectForm && projectForm instanceof HTMLFormElement) {
     projectForm.addEventListener("submit", (e) => {
@@ -51,7 +54,7 @@ if (projectForm && projectForm instanceof HTMLFormElement) {
             projectForm.reset()
             toggleModal("new-project-model")
         } catch (error) {
-            alert(error)
+            errorModal.show((error as Error).message)
         }
     })
 } else {
