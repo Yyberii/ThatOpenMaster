@@ -1,10 +1,39 @@
 export class ErrorModal {
-    modal: HTMLDialogElement
-    errorText: HTMLElement
-    closeBtn: HTMLButtonElement
+    private modal: HTMLDialogElement
+    private errorText: HTMLElement
+    private closeBtn: HTMLButtonElement
 
     constructor(dialogId: string) {
-        const modalElement = document.getElementById(dialogId)
-        if (!modalElement || !(modalElement instanceof HTMLDialogElement)) {
-            throw new Error(`Dialog with ID "${dialogId}" not found or is not a dialog element.`)
+        const dialog = document.getElementById(dialogId)
+
+        if (!(dialog instanceof HTMLDialogElement)) {
+            throw new Error(`Element with ID "${dialogId}" is not a dialog element.`)
         }
+
+        this.modal = dialog
+
+        const errorText = dialog.querySelector("#error-text")
+        const closeBtn = dialog.querySelector("#close-error-btn")
+
+        if (!(errorText instanceof HTMLElement)) {
+            throw new Error("Error text element not found in the dialog.")
+        }
+
+        if (!(closeBtn instanceof HTMLButtonElement)) {
+            throw new Error("Close button not found in the dialog.")
+        }
+
+        this.errorText = errorText
+        this.closeBtn = closeBtn
+
+        this.closeBtn.addEventListener("click", () => {
+            this.modal.close()
+        })
+    }
+
+    show(message: string) {
+        this.errorText.textContent = message
+        this.modal.showModal()
+    }
+}
+  
