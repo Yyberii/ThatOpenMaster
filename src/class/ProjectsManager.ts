@@ -21,7 +21,7 @@ constructor (container: HTMLElement) {
     })
     const nameInUse = projectNames.includes(data.name)
     if (nameInUse) {
-      throw new Error(`A project with the name "${data.name}" already exists`)
+      throw new Error(`A project with the name "${data.name}" already exists`) //error message for modal
     }
     const project = new Project(data)
     project.ui.addEventListener("click", () => {

@@ -3,6 +3,8 @@ export class ErrorModal {
     private errorText: HTMLElement
     private closeBtn: HTMLButtonElement
 
+    //for error modal dialog
+
     constructor(dialogId: string) {
         const dialog = document.getElementById(dialogId)
 

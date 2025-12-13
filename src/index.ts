@@ -54,7 +54,7 @@ if (projectForm && projectForm instanceof HTMLFormElement) {
             projectForm.reset()
             toggleModal("new-project-model")
         } catch (error) {
-            errorModal.show((error as Error).message)
+            errorModal.show((error as Error).message) //shows error modal with the error message from the ProjectsManager.ts
         }
     })
 } else {
