@@ -42,6 +42,13 @@ constructor (container: HTMLElement) {
   private setDetailsPage(project: Project) {
     const detailsPage = document.getElementById("project-details")
     if (!detailsPage) { return }
+    const icon = detailsPage.querySelector("[data-project-info='project-icon']"
+    ) as HTMLElement | null;
+
+    if (icon) {
+      icon.className = `project-icon ${project.iconColorClass}`;
+      icon.textContent = project.iconInitials;
+    }
     const name = detailsPage.querySelector("[data-project-info='name']")
     if (name) { name.textContent = project.name }
     const description = detailsPage.querySelector("[data-project-info='description']")
