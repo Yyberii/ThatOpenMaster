@@ -4,6 +4,8 @@ export type ProjectStatus = "pending" | "active" | "finished"
 export type UserRole = "architect" | "engineer" | "developer"
 
 export interface IProject {
+  iconInitials: string
+  iconColorClass: string
   name: string
   description: string
   status: ProjectStatus
@@ -11,8 +13,28 @@ export interface IProject {
   finishDate: Date
 }
 
+// Project card icon colors
+const ICON_COLOR_CLASSES = [
+  "icon-blue",
+  "icon-green",
+  "icon-orange",
+  "icon-purple",
+  "icon-red",
+  "icon-teal"
+];
+
+function getColorClassFromText(text: string): string {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    hash = text.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return ICON_COLOR_CLASSES[Math.abs(hash) % ICON_COLOR_CLASSES.length];
+}
+
 export class Project implements IProject {
   //to satisfy the Iproject
+  iconInitials: string
+  iconColorClass: string
   name: string
   description: string
   status: "pending" | "active" | "finished"
@@ -25,12 +47,23 @@ export class Project implements IProject {
   progress: number = 0
   id: string
 
-  constructor(data: IProject) {
-    for (const key in data) {
-      this[key] = data[key]
-    }
-    this.id = uuidv4()
-    this.setUI()
+  constructor(data: Omit<IProject, "iconInitials" | "iconColorClass">) {
+    this.name = data.name;
+    this.description = data.description;
+    this.status = data.status;
+    this.userRole = data.userRole;
+    this.finishDate = data.finishDate;
+
+    // for icons to work
+    this.iconInitials = this.name
+      .match(/\b\p{L}/gu)
+      ?.join("")
+      .toUpperCase() || "";
+
+    this.iconColorClass = getColorClassFromText(this.name);
+
+    this.id = uuidv4();
+    this.setUI();
   }
 
   // creates the project card UI
@@ -38,9 +71,14 @@ export class Project implements IProject {
     if (this.ui) {return}
     this.ui = document.createElement("div")
     this.ui.className = "project-card"
+    const initials = this.name
+      .match(/\b\p{L}/gu)
+      ?.join("")
+      .toUpperCase() || "";
+    const colorClass = getColorClassFromText(this.name);
     this.ui.innerHTML = `
     <div class="card-header">
-      <p style="background-color: #3470caff; padding: 10px; border-radius: 8px; aspect-ratio: 1;">PC</p>
+      <p class="project-icon ${colorClass}">${initials}</p>
       <div>
         <h5>${this.name}</h5>
         <p>${this.description}</p>

@@ -350,3 +350,23 @@ input:focus, textarea:focus, select:focus {
     border-radius: 16px;
 }
 
+/* Project icon */
+.project-icon {
+    text-transform: capitalize;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    border-radius: 50%;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* color variants */
+.icon-blue {background-color: #3470ca;}
+.icon-green {background-color: #2ecc71;}
+.icon-orange {background-color: #e67e22;}
+.icon-purple {background-color: #9b59b6;}
+.icon-red {background-color: #e74c3c;}
+.icon-teal {background-color: #1abc9c;}
