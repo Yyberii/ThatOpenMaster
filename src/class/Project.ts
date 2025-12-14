@@ -58,10 +58,10 @@ export class Project implements IProject {
     }
   ) {
     //input validation in which the app doesn’t create a project if the name length is less than 5 characters. Counts spaces as well.
-    if (data.projectName.length < 5) {
+    if (data.name.length < 5) {
       throw new Error("Project name cannot be under 5 characters long");
     }
-    this.projectName = data.projectName;
+    this.name = data.name;
     this.description = data.description;
     this.status = data.status;
     this.userRole = data.userRole;
