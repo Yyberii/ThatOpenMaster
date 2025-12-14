@@ -31,6 +31,10 @@ function getColorClassFromText(text: string): string {
   return ICON_COLOR_CLASSES[Math.abs(hash) % ICON_COLOR_CLASSES.length];
 }
 
+const DEFAULT_FINISH_DATE = new Date(
+  Date.now() + 30 * 24 * 60 * 60 * 1000
+);
+
 export class Project implements IProject {
   //to satisfy the Iproject
   iconInitials: string
@@ -47,13 +51,26 @@ export class Project implements IProject {
   progress: number = 0
   id: string
 
-  constructor(data: Omit<IProject, "iconInitials" | "iconColorClass">) {
-    this.name = data.name;
+  
+
+  constructor(data: Omit<IProject, "iconInitials" | "iconColorClass"> & {
+    finishDate?: Date;
+    }
+  ) {
+    //input validation in which the app doesn’t create a project if the name length is less than 5 characters. Counts spaces as well.
+    if (data.projectName.length < 5) {
+      throw new Error("Project name cannot be under 5 characters long");
+    }
+    this.projectName = data.projectName;
     this.description = data.description;
     this.status = data.status;
     this.userRole = data.userRole;
-    this.finishDate = data.finishDate;
-
+    if (data.finishDate instanceof Date && !isNaN(data.finishDate.getTime())) { // check is date is given and if not then use default date
+      this.finishDate = data.finishDate;
+    } else {
+      this.finishDate = DEFAULT_FINISH_DATE;
+    }
+    
     // for icons to work
     this.iconInitials = this.name
       .match(/\b\p{L}/gu)

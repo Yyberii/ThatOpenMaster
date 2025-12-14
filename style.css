@@ -363,7 +363,7 @@ input:focus, textarea:focus, select:focus {
     justify-content: center;
 }
 
-/* color variants */
+/* color variants for icon */
 .icon-blue {background-color: #3470ca;}
 .icon-green {background-color: #2ecc71;}
 .icon-orange {background-color: #e67e22;}
