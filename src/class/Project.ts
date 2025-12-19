@@ -1,16 +1,19 @@
 import { v4 as uuidv4 } from 'uuid'
 
-export type ProjectStatus = "pending" | "active" | "finished"
-export type UserRole = "architect" | "engineer" | "developer"
+//* OWNS PROJECT DATA
+export type ProjectStatus = "Pending" | "Active" | "Finished"
+export type UserRole = "Architect" | "Engineer" | "Developer"
 
 export interface IProject {
-  iconInitials: string
-  iconColorClass: string
   name: string
   description: string
   status: ProjectStatus
   userRole: UserRole
   finishDate: Date
+  iconInitials?: string
+  iconColorClass?: string
+  cost?: number
+  progress?: number
 }
 
 // Project card icon colors
@@ -41,8 +44,8 @@ export class Project implements IProject {
   iconColorClass: string
   name: string
   description: string
-  status: "pending" | "active" | "finished"
-  userRole: "architect" | "engineer" | "developer"
+  status: "Pending" | "Active" | "Finished"
+  userRole: "Architect" | "Engineer" | "Developer"
   finishDate: Date
 
   //Class internals
@@ -79,6 +82,9 @@ export class Project implements IProject {
 
     this.iconColorClass = getColorClassFromText(this.name);
 
+    this.cost = data.cost ?? 0;
+    this.progress = data.progress ?? 0;
+
     this.id = uuidv4();
     this.setUI();
   }
@@ -88,11 +94,17 @@ export class Project implements IProject {
     if (this.ui) {return}
     this.ui = document.createElement("div")
     this.ui.className = "project-card"
+    this.updateUIContent()
+  }
+
+  // updates the content of the UI without recreating the element
+  updateUIContent() {
     const initials = this.name
       .match(/\b\p{L}/gu)
       ?.join("")
       .toUpperCase() || "";
     const colorClass = getColorClassFromText(this.name);
+    this.ui.className = `project-card`
     this.ui.innerHTML = `
     <div class="card-header">
       <p class="project-icon ${colorClass}">${initials}</p>
@@ -112,11 +124,11 @@ export class Project implements IProject {
       </div>
       <div class="card-property">
         <p style="color: #969696;">Cost</p>
-        <p>$${this.cost}</p>
+        <p>${this.cost} €</p>
       </div>
       <div class="card-property">
         <p style="color: #969696;">Estimated Progress</p>
-        <p>${this.progress * 100}%</p>
+        <p>${this.progress} %</p>
       </div>
     </div>`
   }

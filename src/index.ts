@@ -1,6 +1,9 @@
-import { IProject, ProjectStatus, UserRole } from "./class/Project"
+import { IProject, Project, ProjectStatus, UserRole } from "./class/Project"
 import { ProjectsManager } from "./class/ProjectsManager"
 import { ErrorModal } from "./class/ErrorModal"
+import { EditModal } from "./class/EditModal"
+
+//* THIS GET UI AND DATA AND CONNECTS THEM TOGETHER
 
 function toggleModal(id: string) {
     const modal =  document.getElementById(id)
@@ -35,7 +38,16 @@ if (newProjectBtn){
     console.warn("NewProjectBtn not found")
 }
 
-const errorModal = new ErrorModal("error-msg")
+const errorModal = new ErrorModal
+
+const editModal = new EditModal((formData) => {
+  if (!projectsManager.activeProject) return
+  try {
+    projectsManager.updateProject(projectsManager.activeProject.id, formData)
+  } catch (error) {
+    errorModal.show((error as Error).message)
+  }
+})
 
 const projectForm = document.getElementById("new-project-form")
 if (projectForm && projectForm instanceof HTMLFormElement) {
@@ -51,6 +63,7 @@ if (projectForm && projectForm instanceof HTMLFormElement) {
         }
         try {
             const project = projectsManager.newProject(projectData)
+            console.log(project)
             projectForm.reset()
             toggleModal("new-project-model")
         } catch (error) {
@@ -85,3 +98,18 @@ if (backToProjectsBtn) {
         detailsPage.style.display = "none"
       })
 }
+
+const editProjectBtn = document.getElementById("edit-project-btn")
+if (editProjectBtn) {
+    editProjectBtn.addEventListener("click", () => {
+        if (!projectsManager.activeProject) {
+            console.warn("No active project to edit")
+            return
+        }
+        console.log(projectsManager.activeProject)
+        editModal.show(projectsManager.activeProject)
+
+    })
+      
+}
+ 
