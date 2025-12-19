@@ -1,17 +1,22 @@
 import { IProject, Project } from "./Project"
 
+//* THIS IS FOR MANAGING DATA
+
 export class ProjectsManager {
   list: Project[] = []
   ui: HTMLElement
+  activeProject: Project | null = null
 
 constructor (container: HTMLElement) {
   this.ui = container
     this.newProject({
       name: "Default Project",
       description: "This is just a default app project",
-      status: "pending",
-      userRole: "architect",
-      finishDate: new Date()
+      status: "Pending",
+      userRole: "Architect",
+      finishDate: new Date(),
+      cost: 10000,
+      progress: 10,
     })
   }
 
@@ -25,6 +30,7 @@ constructor (container: HTMLElement) {
     }
     const project = new Project(data)
     project.ui.addEventListener("click", () => {
+      this.activeProject = project   // for tracking the active project, used in index.ts for edit button
       const projectsPage = document.getElementById("projects-page")
       const detailsPage = document.getElementById("project-details")
       if (!(projectsPage && detailsPage)) { return }
@@ -38,6 +44,41 @@ constructor (container: HTMLElement) {
     return project
   }
 
+
+  updateProject(id: string, data: any) {
+    const project = this.list.find((p) => p.id === id)
+    if (!project) {
+      throw new Error(`Project with id "${id}" not found`)
+    }
+    
+    // Update project properties
+    if (data.name && data.name !== project.name) {
+      // Check if name is already in use
+      const projectNames = this.list.map((p) => p.name)
+      if (projectNames.includes(data.name)) {
+        throw new Error(`A project with the name "${data.name}" already exists`)
+      }
+      project.name = data.name
+      // Recalculate initials and color when name changes
+      project.iconInitials = project.name
+        .match(/\b\p{L}/gu)
+        ?.join("")
+        .toUpperCase() || ""
+    }
+    if (data.description) project.description = data.description
+    if (data.status) project.status = data.status
+    if (data.cost) project.cost = parseFloat(data.cost)
+    if (data.userRole) project.userRole = data.userRole
+    if (data.finishDate) project.finishDate = new Date(data.finishDate)
+    if (data.progress !== undefined) project.progress = parseInt(data.progress)
+    
+    // Refresh the UI card to reflect changes
+    project.updateUIContent()
+    
+    // Update UI
+    this.setDetailsPage(project)
+    this.setDashBoard(project)
+  }
 
   private setDetailsPage(project: Project) {
     const detailsPage = document.getElementById("project-details")
@@ -65,11 +106,15 @@ constructor (container: HTMLElement) {
     const status = detailsPage.querySelector("[data-project-info='status']")
     if (status) { status.textContent = project.status }
     const cost = detailsPage.querySelector("[data-project-info='cost']")
-    if (cost) { cost.textContent = project.cost.toString() }
+    if (cost) { cost.textContent = `${project.cost} €` }
     const role = detailsPage.querySelector("[data-project-info='role']")
     if (role) { role.textContent = project.userRole }
     const finishDate = detailsPage.querySelector("[data-project-info='finishDate']")
     if (finishDate) { finishDate.textContent = project.finishDate.toISOString().split('T')[0] }
+    const progress = detailsPage.querySelector("[data-project-info='progress']")
+    if (progress) { progress.textContent = `${project.progress}%` }
+    const progressBar = detailsPage.querySelector("#progress-bar") as HTMLElement | null
+    if (progressBar) { progressBar.style.width = `${project.progress}%` }
   }
 
   getProject(id: string) {
