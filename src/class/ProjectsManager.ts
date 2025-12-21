@@ -1,4 +1,5 @@
 import { IProject, Project } from "./Project"
+import { ToDoManager } from "./ToDoManager"
 
 //* THIS IS FOR MANAGING DATA
 
@@ -115,11 +116,15 @@ constructor (container: HTMLElement) {
     if (progress) { progress.textContent = `${project.progress}%` }
     const progressBar = detailsPage.querySelector("#progress-bar") as HTMLElement | null
     if (progressBar) { progressBar.style.width = `${project.progress}%` }
+
+    // Render to-dos for this project
+    const todoManager = new ToDoManager(project)
+    todoManager.render()
   }
 
   getProject(id: string) {
     const project =  this.list.find((project) => {
-      project.id === id
+      return project.id === id
     })
     return project
   }
@@ -146,28 +151,47 @@ constructor (container: HTMLElement) {
   }
   
   importFromJSON() {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = 'application/json'
-    const reader = new FileReader()
-    reader.addEventListener("load", () => {
-      const json = reader.result
-      if (!json) { return }
-      const projects: IProject[] = JSON.parse(json as string)
-      for (const project of projects) {
-        try {
-          this.newProject(project)
+    const input = document.createElement('input') //*Creates input element
+    input.type = 'file' //*Specifies that the input is for file selection
+    input.accept = 'application/json' //*Restricts file types to JSON files
+    const reader = new FileReader() //*Creates a FileReader to read the file content
+    reader.addEventListener("load", () => { //*When file is loaded
+      const json = reader.result //*Gets the file content that is set under result
+      if (!json) { return } //*If no content, exit
+      const projects: IProject[] = JSON.parse(json as string) //*Parses JSON content into array of project data
+      for (const projectData of projects) { //*Iterates through each project data
+        try { //*Tries to import each project
+          const existingProject = this.list.find((p) => p.name === projectData.name) // Check if project with this name already exists
+          if (existingProject) {
+            // Update existing project
+            this.updateProject(existingProject.id, projectData)
+          } else {
+            // Create new project using fromJSON to restore todos
+            const project = Project.fromJSON(projectData)
+            project.ui.addEventListener("click", () => {
+              this.activeProject = project
+              const projectsPage = document.getElementById("projects-page")
+              const detailsPage = document.getElementById("project-details")
+              if (!(projectsPage && detailsPage)) { return }
+              projectsPage.style.display = "none"
+              detailsPage.style.display = "flex"
+              this.setDetailsPage(project)
+              this.setDashBoard(project)
+            })
+            this.ui.append(project.ui)
+            this.list.push(project)
+          }
         } catch (error) {
-
+          console.error(`Failed to import project: ${error}`)
         }
       }
     })
-    input.addEventListener("change", () => {
-      const filesList = input.files
-      if (!filesList) { return }
-      reader.readAsText(filesList[0])
+    input.addEventListener("change", () => { //*When user selects a file
+      const filesList = input.files //*Gets the list of selected files
+      if (!filesList) { return } //*If no files, exit
+      reader.readAsText(filesList[0]) //*Reads the first selected file as text
     })
-    input.click()
+    input.click() //*Simulates a click to open the file dialog
   }
 
 

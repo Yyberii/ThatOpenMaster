@@ -1,7 +1,8 @@
-import { IProject, Project, ProjectStatus, UserRole } from "./class/Project"
+import { IProject, ProjectStatus, UserRole } from "./class/Project"
 import { ProjectsManager } from "./class/ProjectsManager"
 import { ErrorModal } from "./class/ErrorModal"
 import { EditModal } from "./class/EditModal"
+import { ToDoManager } from "./class/ToDoManager"
 
 //* THIS GET UI AND DATA AND CONNECTS THEM TOGETHER
 
@@ -47,10 +48,12 @@ const editModal = new EditModal((formData) => {
   } catch (error) {
     errorModal.show((error as Error).message)
   }
+}, (message: string) => { // This runs when validation fails, different from projectForm
+  errorModal.show(message)
 })
 
 const projectForm = document.getElementById("new-project-form")
-if (projectForm && projectForm instanceof HTMLFormElement) {
+if (projectForm instanceof HTMLFormElement) {
     projectForm.addEventListener("submit", (e) => {
         e.preventDefault()
         const formData = new FormData(projectForm)
@@ -112,4 +115,16 @@ if (editProjectBtn) {
     })
       
 }
- 
+
+
+const ToDoAddBtn = document.getElementById("ToDoAdd-Btn")
+if (ToDoAddBtn) {
+  ToDoAddBtn.addEventListener("click", () => {
+    if (!projectsManager.activeProject) {
+      console.warn("No active project to add to-do")
+      return
+    }
+    const todoManager = new ToDoManager(projectsManager.activeProject)
+    todoManager.render(true)
+  })
+}

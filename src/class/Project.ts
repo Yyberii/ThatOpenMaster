@@ -10,8 +10,8 @@ export interface IProject {
   status: ProjectStatus
   userRole: UserRole
   finishDate: Date
-  iconInitials?: string
-  iconColorClass?: string
+  iconInitials?: string //* no nesessary, thats why the ? mark. Will be created automatically
+  iconColorClass?: string //* no nesessary, thats why the ? mark. Will be created automatically
   cost?: number
   progress?: number
 }
@@ -34,25 +34,37 @@ function getColorClassFromText(text: string): string {
   return ICON_COLOR_CLASSES[Math.abs(hash) % ICON_COLOR_CLASSES.length];
 }
 
+export { getColorClassFromText }
+
+export interface IToDo {
+  id: string
+  title: string
+  dueDate: Date
+  completed: boolean
+  status: ProjectStatus
+}
+
 const DEFAULT_FINISH_DATE = new Date(
   Date.now() + 30 * 24 * 60 * 60 * 1000
 );
 
 export class Project implements IProject {
-  //to satisfy the Iproject
+  //to satisfy the IProject
   iconInitials: string
   iconColorClass: string
   name: string
   description: string
-  status: "Pending" | "Active" | "Finished"
-  userRole: "Architect" | "Engineer" | "Developer"
+  status: ProjectStatus
+  userRole: UserRole
   finishDate: Date
 
+
   //Class internals
-  ui: HTMLDivElement
+  ui!: HTMLDivElement
   cost: number = 0
   progress: number = 0
   id: string
+  todos: IToDo[] = []
 
   
 
@@ -131,5 +143,76 @@ export class Project implements IProject {
         <p>${this.progress} %</p>
       </div>
     </div>`
+  }
+
+  addToDo(title: string, dueDate: Date, status: ProjectStatus = "Pending"): IToDo {
+    const todo: IToDo = {
+      id: uuidv4(),
+      title,
+      dueDate,
+      completed: false,
+      status
+    }
+    this.todos.push(todo)
+    return todo
+  }
+
+  deleteToDo(id: string) {
+    this.todos = this.todos.filter(todo => todo.id !== id)
+  }
+
+  toggleToDo(id: string) {
+    const todo = this.todos.find(t => t.id === id)
+    if (todo) {
+      todo.completed = !todo.completed
+    }
+  }
+
+  updateToDoStatus(id: string, status: ProjectStatus) {
+    const todo = this.todos.find(t => t.id === id)
+    if (todo) {
+      todo.status = status
+    }
+  }
+
+  toJSON() {
+    return {
+      id: this.id,
+      name: this.name,
+      description: this.description,
+      status: this.status,
+      userRole: this.userRole,
+      finishDate: this.finishDate.toISOString(),
+      iconInitials: this.iconInitials,
+      iconColorClass: this.iconColorClass,
+      cost: this.cost,
+      progress: this.progress,
+      todos: this.todos.map(todo => ({
+        ...todo,
+        dueDate: todo.dueDate instanceof Date ? todo.dueDate.toISOString() : todo.dueDate
+      }))
+    }
+  }
+
+  static fromJSON(data: any): Project {
+    const project = new Project({
+      name: data.name,
+      description: data.description,
+      status: data.status,
+      userRole: data.userRole,
+      finishDate: new Date(data.finishDate),
+      cost: data.cost,
+      progress: data.progress
+    })
+    
+    // Restore todos with proper Date objects
+    if (data.todos && Array.isArray(data.todos)) {
+      project.todos = data.todos.map((todo: any) => ({
+        ...todo,
+        dueDate: new Date(todo.dueDate)
+      }))
+    }
+    
+    return project
   }
 }
