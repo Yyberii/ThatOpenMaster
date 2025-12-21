@@ -282,6 +282,24 @@ input:focus, textarea:focus, select:focus {
     background-color: var(--primary); 
 }
 
+.todo-item-pending {
+  background-color: #7ea7ff;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.todo-item-active {
+  background-color: #b8e946c2;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.todo-item-finished {
+  background-color: #80a107;
+  padding: 10px;
+  border-radius: 5px;
+}
+
 .search-box {
     display: flex;
     align-items: center;
@@ -370,3 +388,28 @@ input:focus, textarea:focus, select:focus {
 .icon-purple {background-color: #9b59b6;}
 .icon-red {background-color: #e74c3c;}
 .icon-teal {background-color: #1abc9c;}
+
+#ToDoAdd-Btn:hover {
+    background-color: var(--primary-400);
+    border-radius: 16px;
+}
+
+.todo-item-pending {
+  background-color: #1a1a2e;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.todo-item-active {
+  background-color: blueviolet;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.todo-item-finished {
+  background-color: green;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+

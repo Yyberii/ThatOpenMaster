@@ -5,11 +5,13 @@ export class EditModal {
   private editModalContent: HTMLElement
   private closeBtn: HTMLButtonElement
   private onSave?: (data: any) => void
+  private onError?: (message: string) => void
 
 //* ONLY FOR USER INTERFACE AND DISPLAYING DATA
 
-  constructor(onSave?: (data: any) => void) {
+  constructor(onSave?: (data: any) => void, onError?: (message: string) => void) {
     this.onSave = onSave
+    this.onError = onError
     const existing = document.getElementById("edit-modal")
 
     if (existing) {
@@ -97,12 +99,26 @@ export class EditModal {
       this.modal.close()
     })
 
-    const saveBtn = this.modal.querySelector("#save-edit-btn") as HTMLButtonElement | null
+    const saveBtn = this.modal.querySelector("#save-edit-btn")
     if (saveBtn) {
       saveBtn.addEventListener("click", () => {
         if (this.onSave) {
+          const nameInput = this.modal.querySelector("#edit-name") as HTMLInputElement | null
+          const nameValue = nameInput?.value || ""
+          
+          // Validate name length
+          if (nameValue.length < 5) {
+            const message = "Project name cannot be under 5 characters long"
+            if (this.onError) {
+              this.onError(message)
+            } else {
+              alert(message)
+            }
+            return
+          }
+          
           const formData = {
-            name: (this.modal.querySelector("#edit-name") as HTMLInputElement)?.value,
+            name: nameValue,
             description: (this.modal.querySelector("#edit-description") as HTMLTextAreaElement)?.value,
             status: (this.modal.querySelector("#edit-status") as HTMLSelectElement)?.value,
             cost: (this.modal.querySelector("#edit-cost") as HTMLInputElement)?.value,
@@ -118,42 +134,42 @@ export class EditModal {
   }
 
   show(project: Project) {
-    const nameInput = this.modal.querySelector("#edit-name") as HTMLInputElement | null;
-    const descInput = this.modal.querySelector("#edit-description") as HTMLTextAreaElement | null;
-    const statusSelect = this.modal.querySelector("#edit-status") as HTMLSelectElement | null;
-    const costInput = this.modal.querySelector("#edit-cost") as HTMLInputElement | null;
-    const roleSelect = this.modal.querySelector("#edit-role") as HTMLSelectElement | null;
-    const finishDateInput = this.modal.querySelector("#edit-finishDate") as HTMLInputElement | null;
-    const progressInput = this.modal.querySelector("#edit-progress") as HTMLInputElement | null;
-    const progressBar = this.modal.querySelector("#progress-bar") as HTMLElement | null;
+    const nameInput = this.modal.querySelector("#edit-name");
+    const descInput = this.modal.querySelector("#edit-description");
+    const statusSelect = this.modal.querySelector("#edit-status");
+    const costInput = this.modal.querySelector("#edit-cost");
+    const roleSelect = this.modal.querySelector("#edit-role");
+    const finishDateInput = this.modal.querySelector("#edit-finishDate");
+    const progressInput = this.modal.querySelector("#edit-progress");
+    const progressBar = this.modal.querySelector("#progress-bar");
 
-    if (nameInput) {
+    if (nameInput instanceof HTMLInputElement) {
       nameInput.value = project.name
     }
-    if (descInput) {
+    if (descInput instanceof HTMLTextAreaElement) {
       descInput.value = project.description
     }
-    if (statusSelect) {
+    if (statusSelect instanceof HTMLSelectElement) {
       statusSelect.value = project.status
     }
-    if (costInput) {
+    if (costInput instanceof HTMLInputElement) {
       costInput.value = project.cost.toString()
     }
-    if (roleSelect) {
+    if (roleSelect instanceof HTMLSelectElement) {
       roleSelect.value = project.userRole
     }
-    if (finishDateInput) {
+    if (finishDateInput instanceof HTMLInputElement) {
       finishDateInput.value = project.finishDate.toISOString().split('T')[0]
     }
-    if (progressInput) {
+    if (progressInput instanceof HTMLInputElement) {
       progressInput.value = project.progress.toString()
       progressInput.addEventListener("input", () => {
-        if (progressBar) {
+        if (progressBar instanceof HTMLElement) {
           progressBar.style.width = `${progressInput.value}%`
         }
       })
     }
-    if (progressBar) {
+    if (progressBar instanceof HTMLElement) {
       progressBar.style.width = `${project.progress}%`
     }
     if (!this.modal.open) {
@@ -161,15 +177,3 @@ export class EditModal {
     }
   }
 }  
-
-/* const editModal = document.getElementById("edit-modal")
-if (editModal) { editModal.addEventListener("submit", (e) => {
-    e.preventDefault()
-    const modalData = new FormData(editModal)
-else {
-  console.warn("Edit modal not found")
-}
-
-const myProject = new Project(formData.get("name"))
-
-*/
