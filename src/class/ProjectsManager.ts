@@ -10,16 +10,17 @@ export class ProjectsManager {
 
 constructor (container: HTMLElement) {
   this.ui = container
-    this.newProject({
-      name: "Default Project",
-      description: "This is just a default app project",
-      status: "Pending",
-      userRole: "Architect",
-      finishDate: new Date(),
-      cost: 10000,
-      progress: 10,
-    })
-  }
+  const project = this.newProject({
+    name: "Default Project",
+    description: "This is just a default app project",
+    status: "Pending",
+    userRole: "Architect",
+    finishDate: new Date(),
+    cost: 10000,
+    progress: 10,
+  })
+  project.ui.click() // NEEDS TO BE DELETED AFTER TESTING
+}
 
   newProject(data: IProject) {
     const projectNames = this.list.map((project) => {
