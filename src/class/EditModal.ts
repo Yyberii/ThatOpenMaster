@@ -1,4 +1,4 @@
-import { IProject, Project, ProjectStatus, UserRole } from "./Project"
+/* import { IProject, Project, ProjectStatus, UserRole } from "./Project"
 
 export class EditModal {
   private modal: HTMLDialogElement
@@ -177,3 +177,4 @@ export class EditModal {
     }
   }
 }  
+*/

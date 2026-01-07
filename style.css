@@ -24,7 +24,7 @@
     padding : 0;
     }
 
-body {
+#app {
     display: grid;
     grid-template-columns: 300px 1fr;
     grid-template-areas: "sidebar content";
@@ -87,10 +87,9 @@ button:hover {
     height: 65px;
 }
 
-#nav-buttons {
-    display: flex;
-    flex-direction: column;
-    row-gap: 15px;
+#nav-buttons a{
+    color: white;
+    text-decoration: none;
 }
 
 #nav-buttons li {
@@ -108,11 +107,12 @@ button:hover {
     background-color: var(--primary-400);
 }
 
-/* Content styles */
-
-#content {
-
+#projects-list a {
+    color: white;
+    text-decoration: none;
 }
+
+/* Content styles */
 
 header {
     padding: 30px 40px;
@@ -157,7 +157,7 @@ header {
 }
 
 #projects-list {
-    padding: 20 40px;
+    padding: 20px 40px;
     gap: 30px;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));

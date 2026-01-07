@@ -1,4 +1,4 @@
-export class ErrorModal {
+/* export class ErrorModal {
     private modal: HTMLDialogElement
     private errorText: HTMLElement
     private closeBtn: HTMLButtonElement
@@ -73,4 +73,4 @@ export class ErrorModal {
         }
     }
 }
-  
+  */

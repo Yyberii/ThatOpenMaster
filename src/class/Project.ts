@@ -60,7 +60,6 @@ export class Project implements IProject {
 
 
   //Class internals
-  ui!: HTMLDivElement
   cost: number = 0
   progress: number = 0
   id: string
@@ -98,51 +97,6 @@ export class Project implements IProject {
     this.progress = data.progress ?? 0;
 
     this.id = uuidv4();
-    this.setUI();
-  }
-
-  // creates the project card UI
-  setUI() {
-    if (this.ui) {return}
-    this.ui = document.createElement("div")
-    this.ui.className = "project-card"
-    this.updateUIContent()
-  }
-
-  // updates the content of the UI without recreating the element
-  updateUIContent() {
-    const initials = this.name
-      .match(/\b\p{L}/gu)
-      ?.join("")
-      .toUpperCase() || "";
-    const colorClass = getColorClassFromText(this.name);
-    this.ui.className = `project-card`
-    this.ui.innerHTML = `
-    <div class="card-header">
-      <p class="project-icon ${colorClass}">${initials}</p>
-      <div>
-        <h5>${this.name}</h5>
-        <p>${this.description}</p>
-      </div>
-    </div>
-    <div class="card-content">
-      <div class="card-property">
-        <p style="color: #969696;">Status</p>
-        <p>${this.status}</p>
-      </div>
-      <div class="card-property">
-        <p style="color: #969696;">Role</p>
-        <p>${this.userRole}</p>
-      </div>
-      <div class="card-property">
-        <p style="color: #969696;">Cost</p>
-        <p>${this.cost} €</p>
-      </div>
-      <div class="card-property">
-        <p style="color: #969696;">Estimated Progress</p>
-        <p>${this.progress} %</p>
-      </div>
-    </div>`
   }
 
   addToDo(title: string, dueDate: Date, status: ProjectStatus = "Pending"): IToDo {

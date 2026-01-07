@@ -5,11 +5,11 @@ import { ToDoManager } from "./ToDoManager"
 
 export class ProjectsManager {
   list: Project[] = []
-  ui: HTMLElement
   activeProject: Project | null = null
+  onProjectCreated = (project: Project) => {}
+  onProjectDeleted = () => {}
 
-constructor (container: HTMLElement) {
-  this.ui = container
+constructor () {
   const project = this.newProject({
     name: "Default Project",
     description: "This is just a default app project",
@@ -19,7 +19,6 @@ constructor (container: HTMLElement) {
     cost: 10000,
     progress: 10,
   })
-  project.ui.click() // NEEDS TO BE DELETED AFTER TESTING
 }
 
   newProject(data: IProject) {
@@ -31,18 +30,8 @@ constructor (container: HTMLElement) {
       throw new Error(`A project with the name "${data.name}" already exists`) //error message for modal
     }
     const project = new Project(data)
-    project.ui.addEventListener("click", () => {
-      this.activeProject = project   // for tracking the active project, used in index.ts for edit button
-      const projectsPage = document.getElementById("projects-page")
-      const detailsPage = document.getElementById("project-details")
-      if (!(projectsPage && detailsPage)) { return }
-      projectsPage.style.display = "none"
-      detailsPage.style.display = "flex"
-      this.setDetailsPage(project)
-      this.setDashBoard(project)
-    })
-    this.ui.append(project.ui)
     this.list.push(project)
+    this.onProjectCreated(project)
     return project
   }
 
@@ -74,28 +63,8 @@ constructor (container: HTMLElement) {
     if (data.finishDate) project.finishDate = new Date(data.finishDate)
     if (data.progress !== undefined) project.progress = parseInt(data.progress)
     
-    // Refresh the UI card to reflect changes
-    project.updateUIContent()
-    
     // Update UI
-    this.setDetailsPage(project)
     this.setDashBoard(project)
-  }
-
-  private setDetailsPage(project: Project) {
-    const detailsPage = document.getElementById("project-details")
-    if (!detailsPage) { return }
-    const icon = detailsPage.querySelector("[data-project-info='project-icon']"
-    ) as HTMLElement | null;
-
-    if (icon) {
-      icon.className = `project-icon ${project.iconColorClass}`;
-      icon.textContent = project.iconInitials;
-    }
-    const name = detailsPage.querySelector("[data-project-info='name']")
-    if (name) { name.textContent = project.name }
-    const description = detailsPage.querySelector("[data-project-info='description']")
-    if (description) { description.textContent = project.description }
   }
 
   private setDashBoard(project: Project) {
@@ -133,11 +102,11 @@ constructor (container: HTMLElement) {
   deleteProject(id: string) {
     const project = this.getProject(id)
     if (!project) { return }
-    project.ui.remove()
     const remaining = this.list.filter((project) => {
       return project.id !== id
     })
     this.list = remaining
+    this.onProjectDeleted()
   }
 
   exportToJSON(filename: string = "projects") {
@@ -169,18 +138,8 @@ constructor (container: HTMLElement) {
           } else {
             // Create new project using fromJSON to restore todos
             const project = Project.fromJSON(projectData)
-            project.ui.addEventListener("click", () => {
-              this.activeProject = project
-              const projectsPage = document.getElementById("projects-page")
-              const detailsPage = document.getElementById("project-details")
-              if (!(projectsPage && detailsPage)) { return }
-              projectsPage.style.display = "none"
-              detailsPage.style.display = "flex"
-              this.setDetailsPage(project)
-              this.setDashBoard(project)
-            })
-            this.ui.append(project.ui)
             this.list.push(project)
+            this.onProjectCreated(project)  // to notify React that new projects were added
           }
         } catch (error) {
           console.error(`Failed to import project: ${error}`)
@@ -197,8 +156,8 @@ constructor (container: HTMLElement) {
 
 
   getByname(name: string) {
-    const project =  this.list.find((project) => {
-      project.name === name
+    const project = this.list.find((project) => {
+      return project.name === name
     })
     return project
   }
