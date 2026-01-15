@@ -67,7 +67,7 @@ export class Project implements IProject {
 
   
 
-  constructor(data: Omit<IProject, "iconInitials" | "iconColorClass"> & {
+  constructor(data: Omit<IProject, "id = uuidv4" | "iconInitials" | "iconColorClass"> & {
     finishDate?: Date;
     }
   ) {
