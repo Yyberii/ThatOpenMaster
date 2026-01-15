@@ -7,29 +7,31 @@ export class ProjectsManager {
   list: Project[] = []
   activeProject: Project | null = null
   onProjectCreated = (project: Project) => {}
-  onProjectDeleted = () => {}
+  onProjectDeleted = (id: string) => {}
+  onProjectUpdated = (id: string, data: any) => {}
 
-constructor () {
-  const project = this.newProject({
-    name: "Default Project",
-    description: "This is just a default app project",
-    status: "Pending",
-    userRole: "Architect",
-    finishDate: new Date(),
-    cost: 10000,
-    progress: 10,
+filterProjects(value: string) {
+  const filteredProjects = this.list.filter((project) => {
+    return project.name.includes(value)
   })
+  return filteredProjects
 }
 
-  newProject(data: IProject) {
+  newProject(data: IProject, id?: string) {
+    if (data.name.length < 5) {
+      throw new Error("Project name must be at least 5 characters long.")
+    }
     const projectNames = this.list.map((project) => {
       return project.name
     })
     const nameInUse = projectNames.includes(data.name)
     if (nameInUse) {
-      throw new Error(`A project with the name "${data.name}" already exists`) //error message for modal
+      throw new Error(`A project with the name "${data.name}" already exists`)
     }
     const project = new Project(data)
+    if (id) {
+      project.id = id  // <- Use the Firebase ID if provided
+    }
     this.list.push(project)
     this.onProjectCreated(project)
     return project
@@ -65,6 +67,7 @@ constructor () {
     
     // Update UI
     this.setDashBoard(project)
+    this.onProjectUpdated(id, data)
   }
 
   private setDashBoard(project: Project) {
@@ -106,7 +109,7 @@ constructor () {
       return project.id !== id
     })
     this.list = remaining
-    this.onProjectDeleted()
+    this.onProjectDeleted(id)
   }
 
   exportToJSON(filename: string = "projects") {
@@ -153,7 +156,6 @@ constructor () {
     })
     input.click() //*Simulates a click to open the file dialog
   }
-
 
   getByname(name: string) {
     const project = this.list.find((project) => {

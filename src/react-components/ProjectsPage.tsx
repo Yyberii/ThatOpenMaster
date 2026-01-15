@@ -1,20 +1,59 @@
 import * as React from 'react';
+import * as Router from "react-router-dom"
+import * as FireStore from "firebase/firestore"
 import { IProject, Project, ProjectStatus, UserRole } from "../class/Project"
 import { ProjectsManager } from "../class/ProjectsManager"
 import { ProjectCard } from "./ProjectCard"
-import * as Router from 'react-router-dom';
-import { useErrorModal } from './ErrorPage';
+import { useErrorModal } from "./ErrorPage"
+import { SearchBox } from "./SearchBox"
+import { getCollection } from '../firebase';
 
 interface Props {
   projectsManager: ProjectsManager
 }
+
+const projectsCollection = getCollection<IProject>("/projects")
 
 export function ProjectsPage(props: Props) {
   const { show: showError } = useErrorModal()
 
   const [projects, setProjects] = React.useState<Project[]>(props.projectsManager.list)
   props.projectsManager.onProjectCreated = () => {setProjects([...props.projectsManager.list])}
-  props.projectsManager.onProjectDeleted = () => {setProjects([...props.projectsManager.list])}
+  props.projectsManager.onProjectUpdated = () => {setProjects([...props.projectsManager.list])}
+
+  const getFirestoreProjects = async () => {
+    const firebaseProjects = await FireStore.getDocs(projectsCollection)
+    for (const doc of firebaseProjects.docs) {
+      const data = doc.data()
+      let finishDate: Date;
+      const fbDate = data.finishDate as any;
+      if (fbDate && typeof fbDate.toDate === 'function') {
+        finishDate = fbDate.toDate();
+      } else if (fbDate) {
+        finishDate = new Date(fbDate);
+      } else {
+        finishDate = new Date();
+      }
+      const project: IProject = {
+        ...data,
+        finishDate
+      }
+      try {
+        const existingProject = props.projectsManager.getProject(doc.id)
+        if (existingProject) {
+          props.projectsManager.updateProject(doc.id, project)
+        } else {
+          props.projectsManager.newProject(project, doc.id)
+        }
+      } catch (err) {
+        console.error(err)
+      }
+    }
+  }
+
+  React.useEffect(() => {
+    getFirestoreProjects()
+  }, [])
 
   const projectCards = projects.map((project) => {
     return (
@@ -34,20 +73,36 @@ export function ProjectsPage(props: Props) {
     modal.showModal()
   }
 
+  const onCancelClick = () => {
+    const modal = document.getElementById("new-project-model")
+    if (!(modal && modal instanceof HTMLDialogElement)) { return }
+    modal.close()
+  }
+
   const onFormSubmit = (e: React.FormEvent) => {
     const projectForm = document.getElementById("new-project-form")
     if (!(projectForm && projectForm instanceof HTMLFormElement)) {return}
     e.preventDefault()
     const formData = new FormData(projectForm)
+
+    const finishDateValue = formData.get("finishDate") as string;
+    let finishDate = new Date();
+    if (finishDateValue) {
+      finishDate = new Date(finishDateValue);
+    } else {
+      finishDate.setDate(finishDate.getDate() + 30);
+    }
+
     const projectData: IProject = {
       name: formData.get("name") as string,
       description: formData.get("description") as string,
       status: formData.get("status") as ProjectStatus,
       userRole: formData.get("userRole") as UserRole,
-      finishDate: new Date(formData.get("finishDate") as string)
+      finishDate: finishDate
     }
     try {
       const project = props.projectsManager.newProject(projectData)
+      FireStore.addDoc(projectsCollection, projectData)
       projectForm.reset()
       const modal = document.getElementById("new-project-model")
       if (!(modal && modal instanceof HTMLDialogElement)) { return }
@@ -63,6 +118,10 @@ export function ProjectsPage(props: Props) {
 
   const onExportProject = () => {
     props.projectsManager.exportToJSON()
+  }
+
+  const onProjectSearch = (value: string) => {
+    setProjects(props.projectsManager.filterProjects(value))
   }
 
   return (
@@ -141,6 +200,7 @@ export function ProjectsPage(props: Props) {
               }}
             >
               <button
+                onClick={onCancelClick}
                 id="cancel-btn"
                 type="button"
                 style={{ backgroundColor: "transparent" }}
@@ -156,6 +216,7 @@ export function ProjectsPage(props: Props) {
       </dialog>
       <header>
         <h2>Projects</h2>
+        <SearchBox onChange={(value) => onProjectSearch(value)} />
         <div style={{ display: "flex", alignItems: "center", columnGap: 15 }}>
           <span 
             id="import-projects-btn"
@@ -178,10 +239,9 @@ export function ProjectsPage(props: Props) {
           </button>
         </div>
       </header>
-      <div id="projects-list">
-        { projectCards }
-        </div>
+      {
+        projects.length > 0 ? <div id="projects-list">{projectCards}</div> : <p style={{ textAlign: "center", color: "red", fontSize: "var(--font-large)" }}>No projects found.</p>
+      } 
     </div>
-
   )
 }

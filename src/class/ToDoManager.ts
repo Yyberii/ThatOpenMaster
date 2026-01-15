@@ -3,6 +3,22 @@ import { Project, getColorClassFromText } from "./Project"
 export class ToDoManager {
   constructor(private project: Project) {}
 
+  addToDo(title: string, dueDate: Date, status: 'Pending' | 'Active' | 'Finished') {
+    this.project.addToDo(title, dueDate, status)
+  }
+
+  updateToDoStatus(todoId: string, status: 'Pending' | 'Active' | 'Finished') {
+    this.project.updateToDoStatus(todoId, status)
+  }
+
+  toggleToDo(todoId: string) {
+    this.project.toggleToDo(todoId)
+  }
+
+  getToDos() {
+    return this.project.todos
+  }
+
   render(showForm: boolean = false) {
     // Find the to-do items container
     const todoItemsContainer = document.querySelector('[style*="flex-direction: column; padding: 10px 30px"]') as HTMLElement | null
