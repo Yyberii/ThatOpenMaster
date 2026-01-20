@@ -1,5 +1,7 @@
 import { IProject, Project } from "./Project"
 import { ToDoManager } from "./ToDoManager"
+import * as FireStore from "firebase/firestore"
+import { getCollection } from "../firebase"
 
 //* THIS IS FOR MANAGING DATA
 
@@ -123,38 +125,62 @@ filterProjects(value: string) {
     URL.revokeObjectURL(url)
   }
   
-  importFromJSON() {
-    const input = document.createElement('input') //*Creates input element
-    input.type = 'file' //*Specifies that the input is for file selection
-    input.accept = 'application/json' //*Restricts file types to JSON files
-    const reader = new FileReader() //*Creates a FileReader to read the file content
-    reader.addEventListener("load", () => { //*When file is loaded
-      const json = reader.result //*Gets the file content that is set under result
-      if (!json) { return } //*If no content, exit
-      const projects: IProject[] = JSON.parse(json as string) //*Parses JSON content into array of project data
-      for (const projectData of projects) { //*Iterates through each project data
-        try { //*Tries to import each project
-          const existingProject = this.list.find((p) => p.name === projectData.name) // Check if project with this name already exists
+  async importFromJSON() {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'application/json'
+    const reader = new FileReader()
+    
+    const projectsCollection = getCollection<IProject>("/projects")
+    
+    reader.addEventListener("load", async () => {
+      const json = reader.result
+      if (!json) { return }
+      const projects: IProject[] = JSON.parse(json as string)
+      
+      for (const projectData of projects) {
+        try {
+          const existingProject = this.list.find((p) => p.name === projectData.name)
+          
           if (existingProject) {
-            // Update existing project
+            // Update existing project in Firebase
+            await FireStore.updateDoc(
+              FireStore.doc(projectsCollection, existingProject.id),
+              projectData as any
+            )
             this.updateProject(existingProject.id, projectData)
           } else {
-            // Create new project using fromJSON to restore todos
+            // Create new project
             const project = Project.fromJSON(projectData)
+            
+            // Add to Firebase and get the document reference
+            const docRef = await FireStore.addDoc(projectsCollection, {
+              name: project.name,
+              description: project.description,
+              status: project.status,
+              userRole: project.userRole,
+              finishDate: project.finishDate,
+              cost: project.cost,
+              progress: project.progress
+            })
+            
+            // Use Firebase ID
+            project.id = docRef.id
             this.list.push(project)
-            this.onProjectCreated(project)  // to notify React that new projects were added
+            this.onProjectCreated(project)
           }
         } catch (error) {
           console.error(`Failed to import project: ${error}`)
         }
       }
     })
-    input.addEventListener("change", () => { //*When user selects a file
-      const filesList = input.files //*Gets the list of selected files
-      if (!filesList) { return } //*If no files, exit
-      reader.readAsText(filesList[0]) //*Reads the first selected file as text
+    
+    input.addEventListener("change", () => {
+      const filesList = input.files
+      if (!filesList) { return }
+      reader.readAsText(filesList[0])
     })
-    input.click() //*Simulates a click to open the file dialog
+    input.click()
   }
 
   getByname(name: string) {

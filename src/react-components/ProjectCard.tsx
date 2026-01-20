@@ -9,8 +9,8 @@ export function ProjectCard(props: Props) {
   return (
     <div className="project-card">
       <div className="card-header">
-        <p className="project-icon icon-blue">
-          HC
+        <p className={`project-icon ${props.project.iconColorClass}`}>
+          {props.project.iconInitials}
         </p>
         <div>
           <h5>{ props.project.name }</h5>

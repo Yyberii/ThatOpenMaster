@@ -138,8 +138,8 @@ export function ProjectDetailsPage(props: Props) {
                 marginBottom: 30
               }}
             >
-              <p data-project-info="project-icon" className="project-icon">
-                HC
+              <p data-project-info="project-icon " className={`project-icon ${project.iconColorClass}`}>
+                {project.iconInitials}
               </p>
               <ProjectEditBtn onClick={handleEditClick} />
             </div>
