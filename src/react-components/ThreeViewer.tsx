@@ -85,11 +85,11 @@ export function ThreeViewer() {
     mtlLoader = new MTLLoader()
     
     
-    mtlLoader.load("../assets/Gear/Gear1.mtl", (materials) => {
+    mtlLoader.load("/Gear/Gear1.mtl", (materials) => {
         materials.preload()
         if (!objLoader) return
         objLoader.setMaterials(materials)
-        objLoader.load("../assets/Gear/Gear1.obj", (object) => {
+        objLoader.load("/Gear/Gear1.obj", (object) => {
           if (!scene) return
             scene.add(object)
             mesh = object

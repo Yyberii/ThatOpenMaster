@@ -96,7 +96,7 @@ export class Project implements IProject {
     this.cost = data.cost ?? 0;
     this.progress = data.progress ?? 0;
 
-    this.id = uuidv4();
+    this.id = uuidv4()
   }
 
   addToDo(title: string, dueDate: Date, status: ProjectStatus = "Pending"): IToDo {

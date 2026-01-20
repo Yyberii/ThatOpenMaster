@@ -4,7 +4,6 @@ import * as Router from "react-router-dom"
 import { Sidebar } from "./react-components/Sidebar"
 import { ProjectsPage } from "./react-components/ProjectsPage"
 import { ErrorModalProvider } from "./react-components/ErrorPage"
-import { ToDoManager } from "./class/ToDoManager"
 import { ProjectDetailsPage } from "./react-components/ProjectDetailsPage"
 import { ProjectsManager } from "./class/ProjectsManager"
 
@@ -34,16 +33,4 @@ if (backToProjectsBtn) {
         projectsPage.style.display = "flex"
         detailsPage.style.display = "none"
       })
-}
-
-const ToDoAddBtn = document.getElementById("ToDoAdd-Btn")
-if (ToDoAddBtn) {
-  ToDoAddBtn.addEventListener("click", () => {
-    if (!projectsManager.activeProject) {
-      console.warn("No active project to add to-do")
-      return
-    }
-    const todoManager = new ToDoManager(projectsManager.activeProject)
-    todoManager.render(true)
-  })
 }
