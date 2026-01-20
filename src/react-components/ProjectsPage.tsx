@@ -1,12 +1,13 @@
-import * as React from 'react';
-import * as Router from "react-router-dom"
-import * as FireStore from "firebase/firestore"
-import { IProject, Project, ProjectStatus, UserRole } from "../class/Project"
-import { ProjectsManager } from "../class/ProjectsManager"
-import { ProjectCard } from "./ProjectCard"
-import { useErrorModal } from "./ErrorPage"
-import { SearchBox } from "./SearchBox"
-import { getCollection } from '../firebase';
+import * as React from 'react'
+import * as Router from 'react-router-dom'
+import * as FireStore from 'firebase/firestore'
+import { ProjectsManager } from '../class/ProjectsManager'
+import { IProject } from '../class/Project'
+import { ProjectCard } from './ProjectCard'
+import { SearchBox } from './SearchBox'
+import { useErrorModal } from './ErrorPage'
+import { getCollection } from '../firebase'
+import { ProjectForm } from './ProjectForm'
 
 interface Props {
   projectsManager: ProjectsManager
@@ -18,6 +19,8 @@ export function ProjectsPage(props: Props) {
   const { show: showError } = useErrorModal()
 
   const [projects, setProjects] = React.useState<Project[]>(props.projectsManager.list)
+  const [isFormOpen, setIsFormOpen] = React.useState(false)
+  
   props.projectsManager.onProjectCreated = () => {setProjects([...props.projectsManager.list])}
   props.projectsManager.onProjectUpdated = () => {setProjects([...props.projectsManager.list])}
 
@@ -68,48 +71,11 @@ export function ProjectsPage(props: Props) {
   }, [projects]) 
 
   const onNewProjectClick = () => {
-    const modal = document.getElementById("new-project-model")
-    if (!(modal && modal instanceof HTMLDialogElement)) { return }
-    modal.showModal()
+    setIsFormOpen(true)
   }
 
-  const onCancelClick = () => {
-    const modal = document.getElementById("new-project-model")
-    if (!(modal && modal instanceof HTMLDialogElement)) { return }
-    modal.close()
-  }
-
-  const onFormSubmit = (e: React.FormEvent) => {
-    const projectForm = document.getElementById("new-project-form")
-    if (!(projectForm && projectForm instanceof HTMLFormElement)) {return}
-    e.preventDefault()
-    const formData = new FormData(projectForm)
-
-    const finishDateValue = formData.get("finishDate") as string;
-    let finishDate = new Date();
-    if (finishDateValue) {
-      finishDate = new Date(finishDateValue);
-    } else {
-      finishDate.setDate(finishDate.getDate() + 30);
-    }
-
-    const projectData: IProject = {
-      name: formData.get("name") as string,
-      description: formData.get("description") as string,
-      status: formData.get("status") as ProjectStatus,
-      userRole: formData.get("userRole") as UserRole,
-      finishDate: finishDate
-    }
-    try {
-      const project = props.projectsManager.newProject(projectData)
-      FireStore.addDoc(projectsCollection, projectData)
-      projectForm.reset()
-      const modal = document.getElementById("new-project-model")
-      if (!(modal && modal instanceof HTMLDialogElement)) { return }
-      modal.close()
-    } catch (err) {
-      showError(err instanceof Error ? err.message : String(err))
-    }
+  const onFormClose = () => {
+    setIsFormOpen(false)
   }
 
   const onImportProject = () => {
@@ -126,94 +92,12 @@ export function ProjectsPage(props: Props) {
 
   return (
     <div className="page" id="projects-page" style={{ display: "flex" }}>
-      <dialog id="new-project-model">
-        <form onSubmit={(e) => {onFormSubmit(e)}} id="new-project-form">
-          <h2>New Project</h2>
-          <div className="input-list">
-            <div className="form-field-container">
-              <label>
-                <span className="material-symbols-rounded">apartment</span>Name
-              </label>
-              <input
-                name="name"
-                type="text"
-                placeholder="What's the name of your project?"
-              />
-              <p
-                style={{
-                  color: "gray",
-                  fontSize: "var(--font-sm)",
-                  marginTop: 5,
-                  fontStyle: "italic"
-                }}
-              >
-                TIP: Give it a short name
-              </p>
-            </div>
-            <div className="form-field-container">
-              <label>
-                <span className="material-symbols-rounded">subject</span>Description
-              </label>
-              <textarea
-                name="description"
-                cols={30}
-                rows={5}
-                placeholder="Give your project a nice description! So people is jealous about it."
-                defaultValue={""}
-              />
-            </div>
-            <div className="form-field-container">
-              <label>
-                <span className="material-symbols-rounded">person</span>Role
-              </label>
-              <select name="userRole">
-                <option>Architect</option>
-                <option>Engineer</option>
-                <option>Developer</option>
-              </select>
-            </div>
-            <div className="form-field-container">
-              <label>
-                <span className="material-symbols-rounded">
-                  not_listed_location
-                </span>
-                Status
-              </label>
-              <select name="status">
-                <option>Pending</option>
-                <option>Active</option>
-                <option>Finished</option>
-              </select>
-            </div>
-            <div className="form-field-container">
-              <label htmlFor="finishDate">
-                <span className="material-symbols-rounded">calendar_month</span>
-                Finish Date
-              </label>
-              <input name="finishDate" type="date" />
-            </div>
-            <div
-              style={{
-                display: "flex",
-                margin: "10px 0px 10px auto",
-                columnGap: 10
-              }}
-            >
-              <button
-                onClick={onCancelClick}
-                id="cancel-btn"
-                type="button"
-                style={{ backgroundColor: "transparent" }}
-              >
-                Cancel
-              </button>
-              <button type="submit" style={{ backgroundColor: "rgb(18, 145, 18)" }}>
-                Accept
-              </button>
-            </div>
-          </div>
-        </form>
-      </dialog>
+      {isFormOpen && (
+        <ProjectForm
+          onClose={onFormClose}
+          projectsManager={props.projectsManager}
+        />
+      )}
       <header>
         <h2>Projects</h2>
         <SearchBox onChange={(value) => onProjectSearch(value)} />

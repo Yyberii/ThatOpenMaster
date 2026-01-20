@@ -1,15 +1,14 @@
 import * as React from 'react'
-import * as Router from 'react-router-dom';
+import * as Router from 'react-router-dom'
 import { ProjectsManager } from '../class/ProjectsManager'
-import { useErrorModal } from './ErrorPage'
-import { ProjectEditBtn } from './ProjectEditBtn'
-import { ProjectEditPage } from './ProjectEditPage'
 import { Project, IProject } from '../class/Project'
-import { ToDoAdd } from './ToDos'
+import { deleteDocument, updateDocument } from '../firebase'
+import { useErrorModal } from './ErrorPage'
 import { ToDoManager } from '../class/ToDoManager'
 import { ThreeViewer } from './ThreeViewer'
-import { deleteDocument } from '../firebase';
-import { updateDocument } from '../firebase';
+import { ProjectEditBtn } from './ProjectEditBtn'
+import { ToDoAdd } from './ToDos'
+import { ProjectForm } from './ProjectForm'
 
 interface Props {
   projectsManager: ProjectsManager
@@ -35,6 +34,11 @@ export function ProjectDetailsPage(props: Props) {
 
   props.projectsManager.onProjectUpdated = async (id, data) => {
     await updateDocument<Partial<IProject>>("projects", id, data)
+    // Refresh project data
+    const updatedProject = props.projectsManager.getProject(id)
+    if (updatedProject) {
+      setProject(updatedProject)
+    }
   }
   
   React.useEffect(() => {
@@ -65,12 +69,7 @@ export function ProjectDetailsPage(props: Props) {
     setIsEditing(true)
   }
 
-  const handleSave = (formData: any) => {
-    props.projectsManager.updateProject(project.id, formData)
-    setIsEditing(false)
-  }
-
-  const handleCancel = () => {
+  const handleFormClose = () => {
     setIsEditing(false)
   }
 
@@ -106,13 +105,15 @@ export function ProjectDetailsPage(props: Props) {
     }
   }
 
-
-  if (isEditing) {
-    return <ProjectEditPage project={project} onSave={handleSave} onCancel={handleCancel} />
-  }
-
   return (
     <div className="page" id="project-details">
+      {isEditing && (
+        <ProjectForm
+          onClose={handleFormClose}
+          projectsManager={props.projectsManager}
+          projectToEdit={project}
+        />
+      )}
       <header>
         <div>
           <h2 data-project-info="name">{project.name}</h2>
@@ -139,16 +140,14 @@ export function ProjectDetailsPage(props: Props) {
               }}
             >
               <p data-project-info="project-icon" className="project-icon">
-                HC
+                {project.iconInitials}
               </p>
               <ProjectEditBtn onClick={handleEditClick} />
             </div>
             <div style={{ padding: "0 30px" }}>
               <div>
                 <h5 data-project-info="name">{project.name}</h5>
-                <p data-project-info="description">
-                  {project.description}
-                </p>
+                <p data-project-info="description">{project.description}</p>
               </div>
               <div
                 style={{
@@ -159,27 +158,19 @@ export function ProjectDetailsPage(props: Props) {
                 }}
               >
                 <div>
-                  <p style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
-                    Status
-                  </p>
+                  <p style={{ color: "#969696", fontSize: 10 }}>Status</p>
                   <p data-project-info="status">{project.status}</p>
                 </div>
                 <div>
-                  <p style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
-                    Cost
-                  </p>
-                  <p data-project-info="cost">{project.cost} €</p>
-                </div>
-                <div>
-                  <p style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
-                    Role
-                  </p>
+                  <p style={{ color: "#969696", fontSize: 10 }}>Role</p>
                   <p data-project-info="role">{project.userRole}</p>
                 </div>
                 <div>
-                  <p style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
-                    Finish Date
-                  </p>
+                  <p style={{ color: "#969696", fontSize: 10 }}>Cost</p>
+                  <p data-project-info="cost">{project.cost} €</p>
+                </div>
+                <div>
+                  <p style={{ color: "#969696", fontSize: 10 }}>Estimated Finish Date</p>
                   <p data-project-info="finishDate">{project.finishDate.toISOString().split('T')[0]}</p>
                 </div>
               </div>
@@ -198,9 +189,7 @@ export function ProjectDetailsPage(props: Props) {
                     padding: "4px 0"
                   }}
                 >
-                  <p data-project-info="progress" style={{ textAlign: "center" }}>
-                    {project.progress}%
-                  </p>
+                  <p data-project-info="progress" style={{ textAlign: "center", color: "white" }}>{project.progress}%</p>
                 </div>
               </div>
             </div>
@@ -245,47 +234,59 @@ export function ProjectDetailsPage(props: Props) {
               }}
             >
               {showTodoForm && (
-                <div style={{ display: "flex", gap: 8, padding: "10px 0", alignItems: "center", flexWrap: "wrap" }}>
-                  <input 
-                    type="text" 
-                    placeholder="What needs to be done?"
+                <div style={{ padding: '15px', backgroundColor: '#2a2a2a', borderRadius: '8px' }}>
+                  <input
+                    type="text"
+                    placeholder="Task title"
                     value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    style={{ flex: 1, minWidth: 180, padding: 6, borderRadius: 5, border: '1px solid #404040', background: '#2a2a2a', color: 'white' }}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    style={{ width: '100%', marginBottom: '10px' }}
                   />
-                  <input 
-                    type="date" 
+                  <input
+                    type="date"
                     value={formData.date}
-                    onChange={(e) => setFormData({...formData, date: e.target.value})}
-                    style={{ padding: 6, borderRadius: 5, border: '1px solid #404040', background: '#2a2a2a', color: 'white' }}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    style={{ width: '100%', marginBottom: '10px' }}
                   />
-                  <select 
+                  <select
                     value={formData.status}
-                    onChange={(e) => setFormData({...formData, status: e.target.value as any})}
-                    style={{ padding: 6, borderRadius: 5, border: '1px solid #404040', background: '#2a2a2a', color: 'white' }}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                    style={{ width: '100%', marginBottom: '10px' }}
                   >
-                    <option value="Pending">Pending</option>
-                    <option value="Active">Active</option>
-                    <option value="Finished">Finished</option>
+                    <option>Pending</option>
+                    <option>Active</option>
+                    <option>Finished</option>
                   </select>
-                  <button onClick={handleTodoSubmit} style={{ padding: '6px 12px', backgroundColor: 'rgb(18, 145, 18)', borderRadius: 5, border: 'none', color: 'white', cursor: 'pointer' }}>Add</button>
-                  <button onClick={handleTodoCancel} style={{ padding: '6px 12px', backgroundColor: 'transparent', border: '1px solid #404040', borderRadius: 5, color: 'white', cursor: 'pointer' }}>Cancel</button>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button onClick={handleTodoSubmit} style={{ flex: 1, backgroundColor: 'green' }}>Add</button>
+                    <button onClick={handleTodoCancel} style={{ flex: 1, backgroundColor: 'transparent' }}>Cancel</button>
+                  </div>
                 </div>
               )}
               {todos.map(todo => (
-                <div key={todo.id} className="todo-item">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ display: "flex", columnGap: 15, alignItems: "center" }}>
-                      <span
-                        className="material-symbols-rounded"
-                        onClick={() => handleTodoToggle(todo.id)}
-                        style={{ padding: 10, backgroundColor: "#686868", borderRadius: 10, cursor: 'pointer' }}
-                      >
-                        construction
+                <div key={todo.id} style={{ padding: '15px', backgroundColor: '#2a2a2a', borderRadius: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <input
+                        type="checkbox"
+                        checked={todo.completed}
+                        onChange={() => handleTodoToggle(todo.id)}
+                      />
+                      <span style={{ textDecoration: todo.completed ? 'line-through' : 'none' }}>
+                        {todo.title}
                       </span>
-                      <p style={todo.completed ? { textDecoration: "line-through", color: "#808080" } : {}}>{todo.title}</p>
                     </div>
-                    <p style={{ textWrap: "nowrap", marginLeft: 10 }}>{new Date(todo.dueDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <span>{new Date(todo.dueDate).toLocaleDateString()}</span>
+                      <select
+                        value={todo.status}
+                        onChange={(e) => handleTodoStatusChange(todo.id, e.target.value as any)}
+                      >
+                        <option>Pending</option>
+                        <option>Active</option>
+                        <option>Finished</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               ))}
