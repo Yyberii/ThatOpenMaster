@@ -18,6 +18,11 @@
     --font-3xl: 22px;
 }
 
+body {
+    background-color: var(--background);
+}
+
+
 *{
     font-family: 'Inter', sans-serif;
     margin: 0;
@@ -71,6 +76,7 @@ button:hover {
     display: flex;
     flex-direction: column;
     height: 100%;
+    background-color: var(--background-300);
 }
 
 /* Sidebar styles */
@@ -273,13 +279,14 @@ input:focus, textarea:focus, select:focus {
 
 .todo-item {
     padding: 20px;
-    background-color: var(--background-200);
+    background-color: transparent;
+    outline: 1px solid #969696;
     border-radius: 10px;
     cursor: pointer;
 }
 
 .todo-item:hover {
-    background-color: var(--primary); 
+    background-color: #ffffff27;
 }
 
 .todo-item-pending {
@@ -392,24 +399,6 @@ input:focus, textarea:focus, select:focus {
 #ToDoAdd-Btn:hover {
     background-color: var(--primary-400);
     border-radius: 16px;
-}
-
-.todo-item-pending {
-  background-color: #1a1a2e;
-  padding: 10px;
-  border-radius: 5px;
-}
-
-.todo-item-active {
-  background-color: blueviolet;
-  padding: 10px;
-  border-radius: 5px;
-}
-
-.todo-item-finished {
-  background-color: green;
-  padding: 10px;
-  border-radius: 5px;
 }
 
 

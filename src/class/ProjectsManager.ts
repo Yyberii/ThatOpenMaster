@@ -1,5 +1,7 @@
 import { IProject, Project } from "./Project"
-import { ToDoManager } from "./ToDoManager"
+// import { ToDoManager } from "./ToDoManager" // DELETE THIS LINE
+import * as FireStore from "firebase/firestore"
+import { getCollection } from "../firebase"
 
 //* THIS IS FOR MANAGING DATA
 
@@ -28,10 +30,7 @@ filterProjects(value: string) {
     if (nameInUse) {
       throw new Error(`A project with the name "${data.name}" already exists`)
     }
-    const project = new Project(data)
-    if (id) {
-      project.id = id  // <- Use the Firebase ID if provided
-    }
+    const project = new Project(data, id) // Pass the id to the constructor
     this.list.push(project)
     this.onProjectCreated(project)
     return project
@@ -66,33 +65,7 @@ filterProjects(value: string) {
     if (data.progress !== undefined) project.progress = parseInt(data.progress)
     
     // Update UI
-    this.setDashBoard(project)
     this.onProjectUpdated(id, data)
-  }
-
-  private setDashBoard(project: Project) {
-    const detailsPage = document.getElementById("project-dashboard")
-    if (!detailsPage) { return }
-    const name = detailsPage.querySelector("[data-project-info='name']")
-    if (name) { name.textContent = project.name }
-    const description = detailsPage.querySelector("[data-project-info='description']")
-    if (description) { description.textContent = project.description }
-    const status = detailsPage.querySelector("[data-project-info='status']")
-    if (status) { status.textContent = project.status }
-    const cost = detailsPage.querySelector("[data-project-info='cost']")
-    if (cost) { cost.textContent = `${project.cost} €` }
-    const role = detailsPage.querySelector("[data-project-info='role']")
-    if (role) { role.textContent = project.userRole }
-    const finishDate = detailsPage.querySelector("[data-project-info='finishDate']")
-    if (finishDate) { finishDate.textContent = project.finishDate.toISOString().split('T')[0] }
-    const progress = detailsPage.querySelector("[data-project-info='progress']")
-    if (progress) { progress.textContent = `${project.progress}%` }
-    const progressBar = detailsPage.querySelector("#progress-bar") as HTMLElement | null
-    if (progressBar) { progressBar.style.width = `${project.progress}%` }
-
-    // Render to-dos for this project
-    const todoManager = new ToDoManager(project)
-    todoManager.render()
   }
 
   getProject(id: string) {
@@ -113,48 +86,103 @@ filterProjects(value: string) {
   }
 
   exportToJSON(filename: string = "projects") {
-    const json = JSON.stringify(this.list, null, 2)
-    const blob = new Blob([json], { type: "application/json" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = filename
-    a.click()
-    URL.revokeObjectURL(url)
+    // Explicitly call the toJSON method for each project to ensure correct serialization
+    const projectsAsJSON = this.list.map(project => project.toJSON());
+    const json = JSON.stringify(projectsAsJSON, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${filename}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
   
-  importFromJSON() {
-    const input = document.createElement('input') //*Creates input element
-    input.type = 'file' //*Specifies that the input is for file selection
-    input.accept = 'application/json' //*Restricts file types to JSON files
-    const reader = new FileReader() //*Creates a FileReader to read the file content
-    reader.addEventListener("load", () => { //*When file is loaded
-      const json = reader.result //*Gets the file content that is set under result
-      if (!json) { return } //*If no content, exit
-      const projects: IProject[] = JSON.parse(json as string) //*Parses JSON content into array of project data
-      for (const projectData of projects) { //*Iterates through each project data
-        try { //*Tries to import each project
-          const existingProject = this.list.find((p) => p.name === projectData.name) // Check if project with this name already exists
+  async importFromJSON() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    const reader = new FileReader();
+    
+    const projectsCollection = getCollection<IProject>("/projects");
+    
+    reader.addEventListener("load", async () => {
+      const json = reader.result;
+      if (!json) { return; }
+      const projectsFromFile: any[] = JSON.parse(json as string);
+      
+      for (const projectData of projectsFromFile) {
+        try {
+          // Use the Project class's own fromJSON method to correctly parse the data
+          const projectToImport = Project.fromJSON(projectData);
+          const existingProject = this.getByname(projectToImport.name);
+          
           if (existingProject) {
-            // Update existing project
-            this.updateProject(existingProject.id, projectData)
+            // --- UPDATE EXISTING PROJECT ---
+            // Merge the imported data into the existing project instance
+            existingProject.description = projectToImport.description;
+            existingProject.status = projectToImport.status;
+            existingProject.userRole = projectToImport.userRole;
+            existingProject.finishDate = projectToImport.finishDate;
+            existingProject.cost = projectToImport.cost;
+            existingProject.progress = projectToImport.progress;
+            existingProject.todos = projectToImport.todos; // Overwrite todos
+
+            // Use setDoc to completely overwrite the document in Firebase with the updated data
+            const docRef = FireStore.doc(projectsCollection, existingProject.id);
+            const dataToSave = {
+              name: existingProject.name,
+              description: existingProject.description,
+              status: existingProject.status,
+              userRole: existingProject.userRole,
+              finishDate: existingProject.finishDate,
+              iconInitials: existingProject.iconInitials,
+              iconColorClass: existingProject.iconColorClass,
+              cost: existingProject.cost,
+              progress: existingProject.progress,
+              todos: existingProject.todos.map(todo => ({
+                ...todo,
+                dueDate: todo.dueDate instanceof Date ? todo.dueDate : new Date(todo.dueDate)
+              }))
+            };
+            await FireStore.setDoc(docRef, dataToSave);
+
+            // Notify the UI that an update happened
+            this.onProjectUpdated(existingProject.id, existingProject.toJSON());
+
           } else {
-            // Create new project using fromJSON to restore todos
-            const project = Project.fromJSON(projectData)
-            this.list.push(project)
-            this.onProjectCreated(project)  // to notify React that new projects were added
+            // --- CREATE NEW PROJECT ---
+            // The project doesn't exist locally, so we'll create it in Firebase.
+            // The 'id' from the JSON file is ignored to prevent conflicts.
+            const newProjectData = projectToImport.toJSON();
+            delete (newProjectData as any).id; // Let Firebase generate a new ID
+
+            const dataToSave = {
+              ...newProjectData,
+              finishDate: projectToImport.finishDate,
+              todos: projectToImport.todos.map(todo => ({
+                ...todo,
+                dueDate: todo.dueDate instanceof Date ? todo.dueDate : new Date(todo.dueDate)
+              }))
+            };
+
+            const docRef = await FireStore.addDoc(projectsCollection, dataToSave);
+            
+            // Now, create the project locally using the new, real ID from Firebase
+            this.newProject(projectToImport, docRef.id);
           }
         } catch (error) {
-          console.error(`Failed to import project: ${error}`)
+          console.error(`Failed to import project "${projectData.name}":`, error);
         }
       }
-    })
-    input.addEventListener("change", () => { //*When user selects a file
-      const filesList = input.files //*Gets the list of selected files
-      if (!filesList) { return } //*If no files, exit
-      reader.readAsText(filesList[0]) //*Reads the first selected file as text
-    })
-    input.click() //*Simulates a click to open the file dialog
+    });
+    
+    input.addEventListener("change", () => {
+      const filesList = input.files;
+      if (!filesList) { return; }
+      reader.readAsText(filesList[0]);
+    });
+    input.click();
   }
 
   getByname(name: string) {

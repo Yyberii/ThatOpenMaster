@@ -1,18 +1,19 @@
 import * as React from 'react';
 
 interface Props {
-  onChange: (value: string) => void
+  onChange: (value: string) => void;
+  placeholder?: string;
 }
 
 export function SearchBox(props: Props) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', columnGap: 10, width: "40%" }}>
+    <div style={{ display: 'flex', columnGap: 10 }}>
       <input
-      onChange={(e) => {props.onChange(e.target.value)}}
+        onChange={(e) => {props.onChange(e.target.value)}}
         type="text"
-        placeholder="Search projects by name"
-        style={{ width: "100%", height: "40px", backgroundColor: "var(--background-100)" }}  
+        placeholder={props.placeholder || "Search..."}
+        style={{ width: "100%", height: "20px", backgroundColor: "var(--background-200)" }}  
       />
-      </div>
+    </div>
   );
 }

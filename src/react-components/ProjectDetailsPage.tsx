@@ -1,15 +1,14 @@
 import * as React from 'react'
-import * as Router from 'react-router-dom';
 import { ProjectsManager } from '../class/ProjectsManager'
 import { useErrorModal } from './ErrorPage'
 import { ProjectEditBtn } from './ProjectEditBtn'
-import { ProjectEditPage } from './ProjectEditPage'
+import { ProjectForm } from './ProjectForm'
 import { Project, IProject } from '../class/Project'
-import { ToDoAdd } from './ToDos'
-import { ToDoManager } from '../class/ToDoManager'
+import * as Router from "react-router-dom"
 import { ThreeViewer } from './ThreeViewer'
 import { deleteDocument } from '../firebase';
 import { updateDocument } from '../firebase';
+import { ProjectTasksList } from './ProjectTasksList' // Add this import
 
 interface Props {
   projectsManager: ProjectsManager
@@ -20,10 +19,6 @@ export function ProjectDetailsPage(props: Props) {
   const [isEditing, setIsEditing] = React.useState(false)
   const [project, setProject] = React.useState<Project | null>(null)
   const [hasError, setHasError] = React.useState(false)
-  const [showTodoForm, setShowTodoForm] = React.useState(false)
-  const [todos, setTodos] = React.useState<any[]>([])
-  const [todoManager, setTodoManager] = React.useState<any>(null)
-  const [formData, setFormData] = React.useState({ title: '', date: '', status: 'Pending' as 'Pending' | 'Active' | 'Finished' })
   const { show: showError } = useErrorModal()
 
   const navigateTo = Router.useNavigate()
@@ -38,34 +33,26 @@ export function ProjectDetailsPage(props: Props) {
   }
   
   React.useEffect(() => {
-    if (!routeParams.id) {
+    if (routeParams.id) {
+      const foundProject = props.projectsManager.getProject(routeParams.id)
+      if (foundProject) {
+        setProject(foundProject)
+      } else {
+        showError(`Project not found with ID ${routeParams.id}`)
+        setHasError(true)
+      }
+    } else {
       showError("Project ID is needed to see this page")
       setHasError(true)
-      return
     }
-    
-    const foundProject = props.projectsManager.getProject(routeParams.id)
-    if (!foundProject) {
-      showError(`Project not found with ID ${routeParams.id}`)
-      setHasError(true)
-      return
-    }
-    
-    setProject(foundProject)
-    setTodos(foundProject.todos)
-    setTodoManager(new ToDoManager(foundProject))
-    setHasError(false)
-  }, [routeParams.id, props.projectsManager, showError])
-  
-  if (hasError || !project) {
-    return <></>
-  }
-  
+  }, [routeParams.id, props.projectsManager.list])
+
   const handleEditClick = () => {
     setIsEditing(true)
   }
 
-  const handleSave = (formData: any) => {
+  const handleSave = (formData: IProject) => {
+    if (!project) return
     props.projectsManager.updateProject(project.id, formData)
     setIsEditing(false)
   }
@@ -74,45 +61,41 @@ export function ProjectDetailsPage(props: Props) {
     setIsEditing(false)
   }
 
-  const handleAddClick = () => {
-    setShowTodoForm(true)
+  const handleProjectUpdate = () => {
+    // This function is called anytime a To-Do is changed.
+    // We'll update the state and save to Firebase here.
+    setProject(prev => {
+      if (!prev) return null;
+      
+      // Create a new instance to refresh the UI correctly
+      const updatedProject = new Project(prev);
+
+      // --- THIS IS THE FIX ---
+      // Save the entire updated project, including the todos array, to Firebase.
+      // We use the toJSON() method to ensure data is in a storable format.
+      props.projectsManager.onProjectUpdated(updatedProject.id, updatedProject.toJSON());
+      
+      return updatedProject;
+    });
+  };
+
+  if (hasError || !project) {
+    return <></>
   }
-
-  const handleTodoSubmit = () => {
-    if (formData.title.trim() && formData.date && todoManager) {
-      todoManager.addToDo(formData.title, new Date(formData.date), formData.status)
-      setTodos([...project.todos])
-      setShowTodoForm(false)
-      setFormData({ title: '', date: '', status: 'Pending' })
-    }
-  }
-
-  const handleTodoCancel = () => {
-    setShowTodoForm(false)
-    setFormData({ title: '', date: '', status: 'Pending' })
-  }
-
-  const handleTodoToggle = (todoId: string) => {
-    if (todoManager) {
-      todoManager.toggleToDo(todoId)
-      setTodos([...project.todos])
-    }
-  }
-
-  const handleTodoStatusChange = (todoId: string, status: 'Pending' | 'Active' | 'Finished') => {
-    if (todoManager) {
-      todoManager.updateToDoStatus(todoId, status)
-      setTodos([...project.todos])
-    }
-  }
-
-
+  
   if (isEditing) {
-    return <ProjectEditPage project={project} onSave={handleSave} onCancel={handleCancel} />
+    return <ProjectForm projectToEdit={project} onSubmit={handleSave} onClose={handleCancel} />
   }
 
   return (
     <div className="page" id="project-details">
+      {isEditing && (
+        <ProjectForm 
+          projectToEdit={project} 
+          onSubmit={handleSave} 
+          onClose={handleCancel} 
+        />
+      )}
       <header>
         <div>
           <h2 data-project-info="name">{project.name}</h2>
@@ -138,8 +121,8 @@ export function ProjectDetailsPage(props: Props) {
                 marginBottom: 30
               }}
             >
-              <p data-project-info="project-icon" className="project-icon">
-                HC
+              <p data-project-info="project-icon " className={`project-icon ${project.iconColorClass}`}>
+                {project.iconInitials}
               </p>
               <ProjectEditBtn onClick={handleEditClick} />
             </div>
@@ -205,91 +188,11 @@ export function ProjectDetailsPage(props: Props) {
               </div>
             </div>
           </div>
-          <div className="dashboard-card" style={{ flexGrow: 1 }}>
-            <div
-              style={{
-                padding: "20px 30px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between"
-              }}
-            >
-              <h4>To-Do List</h4>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "end",
-                  columnGap: 20
-                }}
-              >
-                <div
-                  style={{ display: "flex", alignItems: "center", columnGap: 10 }}
-                >
-                  <span className="material-symbols-rounded">search</span>
-                  <input
-                    type="text"
-                    placeholder="Search To-Do's by name"
-                    style={{ width: "100%" }}
-                  />
-                </div>
-                <ToDoAdd onClick={handleAddClick} />
-              </div>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                padding: "10px 30px",
-                rowGap: 20
-              }}
-            >
-              {showTodoForm && (
-                <div style={{ display: "flex", gap: 8, padding: "10px 0", alignItems: "center", flexWrap: "wrap" }}>
-                  <input 
-                    type="text" 
-                    placeholder="What needs to be done?"
-                    value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    style={{ flex: 1, minWidth: 180, padding: 6, borderRadius: 5, border: '1px solid #404040', background: '#2a2a2a', color: 'white' }}
-                  />
-                  <input 
-                    type="date" 
-                    value={formData.date}
-                    onChange={(e) => setFormData({...formData, date: e.target.value})}
-                    style={{ padding: 6, borderRadius: 5, border: '1px solid #404040', background: '#2a2a2a', color: 'white' }}
-                  />
-                  <select 
-                    value={formData.status}
-                    onChange={(e) => setFormData({...formData, status: e.target.value as any})}
-                    style={{ padding: 6, borderRadius: 5, border: '1px solid #404040', background: '#2a2a2a', color: 'white' }}
-                  >
-                    <option value="Pending">Pending</option>
-                    <option value="Active">Active</option>
-                    <option value="Finished">Finished</option>
-                  </select>
-                  <button onClick={handleTodoSubmit} style={{ padding: '6px 12px', backgroundColor: 'rgb(18, 145, 18)', borderRadius: 5, border: 'none', color: 'white', cursor: 'pointer' }}>Add</button>
-                  <button onClick={handleTodoCancel} style={{ padding: '6px 12px', backgroundColor: 'transparent', border: '1px solid #404040', borderRadius: 5, color: 'white', cursor: 'pointer' }}>Cancel</button>
-                </div>
-              )}
-              {todos.map(todo => (
-                <div key={todo.id} className="todo-item">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ display: "flex", columnGap: 15, alignItems: "center" }}>
-                      <span
-                        className="material-symbols-rounded"
-                        onClick={() => handleTodoToggle(todo.id)}
-                        style={{ padding: 10, backgroundColor: "#686868", borderRadius: 10, cursor: 'pointer' }}
-                      >
-                        construction
-                      </span>
-                      <p style={todo.completed ? { textDecoration: "line-through", color: "#808080" } : {}}>{todo.title}</p>
-                    </div>
-                    <p style={{ textWrap: "nowrap", marginLeft: 10 }}>{new Date(todo.dueDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="dashboard-card" style={{ flex: 1, minWidth: 300 }}>
+            <ProjectTasksList 
+              project={project} 
+              onUpdate={handleProjectUpdate}
+            />
           </div>
         </div>
         <ThreeViewer />
