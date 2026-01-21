@@ -44,8 +44,6 @@ export interface IToDo {
   completed: boolean
   status: ProjectStatus
   priority?: ToDoPriority
-  cost?: number
-  progress?: number
 }
 
 const DEFAULT_FINISH_DATE = new Date(
@@ -61,46 +59,34 @@ export class Project implements IProject {
   status: ProjectStatus
   userRole: UserRole
   finishDate: Date
-
-
-  //Class internals
-  cost: number = 0
-  progress: number = 0
+  cost: number
+  progress: number
   id: string
   todos: IToDo[] = []
 
-  
-
-  constructor(data: Omit<IProject, "id = uuidv4" | "iconInitials" | "iconColorClass"> & {
-    finishDate?: Date;
-    }
-  ) {
-    //input validation in which the app doesn’t create a project if the name length is less than 5 characters. Counts spaces as well.
-    if (data.name.length < 5) {
-      throw new Error("Project name cannot be under 5 characters long");
-    }
+  constructor(data: IProject, id?: string) {
     this.name = data.name;
     this.description = data.description;
     this.status = data.status;
     this.userRole = data.userRole;
-    if (data.finishDate instanceof Date && !isNaN(data.finishDate.getTime())) { // check is date is given and if not then use default date
-      this.finishDate = data.finishDate;
-    } else {
-      this.finishDate = DEFAULT_FINISH_DATE;
+    this.finishDate = new Date(data.finishDate);
+    this.cost = data.cost || 0;
+    this.progress = data.progress || 0;
+    // Prioritize the passed ID, then an existing ID, then generate a new one.
+    this.id = id || (data as Project).id || uuidv4();
+    this.iconInitials = data.name.substring(0, 2).toUpperCase();
+    this.iconColorClass = getColorClassFromText(data.name);
+
+    // --- THIS IS THE FIX ---
+    // If the data has a 'todos' array (from Firebase or another Project instance),
+    // process it and ensure dates are correctly converted.
+    const sourceTodos = (data as any).todos;
+    if (sourceTodos && Array.isArray(sourceTodos)) {
+      this.todos = sourceTodos.map((todo: any) => ({
+        ...todo,
+        dueDate: new Date(todo.dueDate.seconds ? todo.dueDate.toDate() : todo.dueDate)
+      }));
     }
-    
-    // for icons to work
-    this.iconInitials = this.name
-      .match(/\b\p{L}/gu)
-      ?.join("")
-      .toUpperCase() || "";
-
-    this.iconColorClass = getColorClassFromText(this.name);
-
-    this.cost = data.cost ?? 0;
-    this.progress = data.progress ?? 0;
-
-    this.id = uuidv4()
   }
 
   addToDo(title: string, dueDate: Date, status: ProjectStatus = "Pending", priority: ToDoPriority = "Medium", cost: number = 0, progress: number = 0): IToDo {
@@ -111,8 +97,6 @@ export class Project implements IProject {
       completed: false,
       status,
       priority,
-      cost,
-      progress
     }
     this.todos.push(todo)
     return todo
@@ -133,6 +117,23 @@ export class Project implements IProject {
     const todo = this.todos.find(t => t.id === id)
     if (todo) {
       todo.status = status
+    }
+  }
+
+  updateToDoPriority(id: string, priority: ToDoPriority) {
+    const todo = this.todos.find(t => t.id === id)
+    if (todo) {
+      todo.priority = priority
+    }
+  }
+
+  updateToDo(id: string, data: Partial<IToDo>) {
+    const todo = this.todos.find(t => t.id === id)
+    if (todo) {
+      if (data.title) todo.title = data.title
+      if (data.dueDate) todo.dueDate = data.dueDate
+      if (data.status) todo.status = data.status
+      if (data.priority) todo.priority = data.priority
     }
   }
 

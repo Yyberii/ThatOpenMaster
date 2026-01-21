@@ -1,16 +1,14 @@
 import * as React from 'react'
-import * as Router from 'react-router-dom';
 import { ProjectsManager } from '../class/ProjectsManager'
 import { useErrorModal } from './ErrorPage'
 import { ProjectEditBtn } from './ProjectEditBtn'
 import { ProjectForm } from './ProjectForm'
 import { Project, IProject } from '../class/Project'
-import { IToDo } from '../class/Project'
-import { ToDoManager } from '../class/ToDoManager'
+import * as Router from "react-router-dom"
 import { ThreeViewer } from './ThreeViewer'
 import { deleteDocument } from '../firebase';
 import { updateDocument } from '../firebase';
-import { TodoForm } from './ToDoForm'
+import { ProjectTasksList } from './ProjectTasksList' // Add this import
 
 interface Props {
   projectsManager: ProjectsManager
@@ -21,9 +19,6 @@ export function ProjectDetailsPage(props: Props) {
   const [isEditing, setIsEditing] = React.useState(false)
   const [project, setProject] = React.useState<Project | null>(null)
   const [hasError, setHasError] = React.useState(false)
-  const [showTodoForm, setShowTodoForm] = React.useState(false)
-  const [todos, setTodos] = React.useState<any[]>([])
-  const [todoManager, setTodoManager] = React.useState<any>(null)
   const { show: showError } = useErrorModal()
 
   const navigateTo = Router.useNavigate()
@@ -38,34 +33,26 @@ export function ProjectDetailsPage(props: Props) {
   }
   
   React.useEffect(() => {
-    if (!routeParams.id) {
+    if (routeParams.id) {
+      const foundProject = props.projectsManager.getProject(routeParams.id)
+      if (foundProject) {
+        setProject(foundProject)
+      } else {
+        showError(`Project not found with ID ${routeParams.id}`)
+        setHasError(true)
+      }
+    } else {
       showError("Project ID is needed to see this page")
       setHasError(true)
-      return
     }
-    
-    const foundProject = props.projectsManager.getProject(routeParams.id)
-    if (!foundProject) {
-      showError(`Project not found with ID ${routeParams.id}`)
-      setHasError(true)
-      return
-    }
-    
-    setProject(foundProject)
-    setTodos(foundProject.todos)
-    setTodoManager(new ToDoManager(foundProject))
-    setHasError(false)
-  }, [routeParams.id, props.projectsManager, showError])
-  
-  if (hasError || !project) {
-    return <></>
-  }
-  
+  }, [routeParams.id, props.projectsManager.list])
+
   const handleEditClick = () => {
     setIsEditing(true)
   }
 
   const handleSave = (formData: IProject) => {
+    if (!project) return
     props.projectsManager.updateProject(project.id, formData)
     setIsEditing(false)
   }
@@ -74,44 +61,28 @@ export function ProjectDetailsPage(props: Props) {
     setIsEditing(false)
   }
 
-  const handleAddClick = () => {
-    setShowTodoForm(true)
+  const handleProjectUpdate = () => {
+    // This function is called anytime a To-Do is changed.
+    // We'll update the state and save to Firebase here.
+    setProject(prev => {
+      if (!prev) return null;
+      
+      // Create a new instance to refresh the UI correctly
+      const updatedProject = new Project(prev);
+
+      // --- THIS IS THE FIX ---
+      // Save the entire updated project, including the todos array, to Firebase.
+      // We use the toJSON() method to ensure data is in a storable format.
+      props.projectsManager.onProjectUpdated(updatedProject.id, updatedProject.toJSON());
+      
+      return updatedProject;
+    });
+  };
+
+  if (hasError || !project) {
+    return <></>
   }
-
-  const handleTodoSubmit = (todoData: Partial<IToDo>) => {
-    if (todoData.title?.trim() && todoData.dueDate && todoManager) {
-      todoManager.addToDo(
-        todoData.title, 
-        todoData.dueDate, 
-        todoData.status || 'Pending',
-        todoData.priority || 'Medium',
-        todoData.cost || 0,
-        todoData.progress || 0
-      )
-      setTodos([...project.todos])
-      setShowTodoForm(false)
-    }
-  }
-
-  const handleTodoCancel = () => {
-    setShowTodoForm(false)
-  }
-
-  const handleTodoToggle = (todoId: string) => {
-    if (todoManager) {
-      todoManager.toggleToDo(todoId)
-      setTodos([...project.todos])
-    }
-  }
-
-  const handleTodoStatusChange = (todoId: string, status: 'Pending' | 'Active' | 'Finished') => {
-    if (todoManager) {
-      todoManager.updateToDoStatus(todoId, status)
-      setTodos([...project.todos])
-    }
-  }
-
-
+  
   if (isEditing) {
     return <ProjectForm projectToEdit={project} onSubmit={handleSave} onClose={handleCancel} />
   }
@@ -217,76 +188,11 @@ export function ProjectDetailsPage(props: Props) {
               </div>
             </div>
           </div>
-          <div className="dashboard-card" style={{ flexGrow: 1 }}>
-            <div
-              style={{
-                padding: "20px 30px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between"
-              }}
-            >
-              <h4>To-Do List</h4>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "end",
-                  columnGap: 20
-                }}
-              >
-                <div
-                  style={{ display: "flex", alignItems: "center", columnGap: 10 }}
-                >
-                  <span className="material-symbols-rounded">search</span>
-                  <input
-                    type="text"
-                    placeholder="Search To-Do's by name"
-                    style={{ width: "100%" }}
-                  />
-                </div>
-                <span
-                  id="ToDoAdd-Btn"
-                  className="material-symbols-rounded"
-                  onClick={handleAddClick}
-                  style={{ cursor: 'pointer' }}
-                >
-                  add
-                </span>
-              </div>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                padding: "10px 30px",
-                rowGap: 20
-              }}
-            >
-              {showTodoForm && (
-                <TodoForm 
-                  onSubmit={handleTodoSubmit} 
-                  onClose={handleTodoCancel} 
-                />
-              )}
-              {todos.map(todo => (
-                <div key={todo.id} className="todo-item">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ display: "flex", columnGap: 15, alignItems: "center" }}>
-                      <span
-                        className="material-symbols-rounded"
-                        onClick={() => handleTodoToggle(todo.id)}
-                        style={{ padding: 10, backgroundColor: "#686868", borderRadius: 10, cursor: 'pointer' }}
-                      >
-                        construction
-                      </span>
-                      <p style={todo.completed ? { textDecoration: "line-through", color: "#808080" } : {}}>{todo.title}</p>
-                    </div>
-                    <p style={{ textWrap: "nowrap", marginLeft: 10 }}>{new Date(todo.dueDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="dashboard-card" style={{ flex: 1, minWidth: 300 }}>
+            <ProjectTasksList 
+              project={project} 
+              onUpdate={handleProjectUpdate}
+            />
           </div>
         </div>
         <ThreeViewer />

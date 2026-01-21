@@ -18,6 +18,11 @@
     --font-3xl: 22px;
 }
 
+body {
+    background-color: var(--background);
+}
+
+
 *{
     font-family: 'Inter', sans-serif;
     margin: 0;
@@ -71,6 +76,7 @@ button:hover {
     display: flex;
     flex-direction: column;
     height: 100%;
+    background-color: var(--background-300);
 }
 
 /* Sidebar styles */

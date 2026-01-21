@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { Project, IToDo, ProjectStatus } from '../class/Project';
+import { Project, IToDo, ProjectStatus, ToDoPriority } from '../class/Project';
 import { ToDoCard } from './ToDoCard';
 import { TodoForm } from './ToDoForm';
-import { SearchBox } from './SearchBox';
+import { SearchBox } from './SearchBox'; // Import SearchBox
 
 interface Props {
     project: Project;
@@ -14,7 +14,6 @@ export function ProjectTasksList({ project, onUpdate }: Props) {
     const [todoToEdit, setTodoToEdit] = React.useState<IToDo | undefined>(undefined);
     const [searchQuery, setSearchQuery] = React.useState("");
 
-    // Filter todos based on search query
     const filteredTodos = project.todos.filter(todo =>
         todo.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -34,13 +33,18 @@ export function ProjectTasksList({ project, onUpdate }: Props) {
             project.updateToDo(todoToEdit.id, todoData);
         } else {
             project.addToDo(
-                todoData.title || '',
-                todoData.dueDate || new Date(),
-                todoData.status || 'Pending',
-                todoData.priority || 'Medium'
+                todoData.title!,
+                todoData.dueDate!,
+                todoData.status,
+                todoData.priority,
             );
         }
         onUpdate();
+        setIsFormOpen(false);
+        setTodoToEdit(undefined);
+    };
+
+    const handleFormClose = () => {
         setIsFormOpen(false);
         setTodoToEdit(undefined);
     };
@@ -56,59 +60,46 @@ export function ProjectTasksList({ project, onUpdate }: Props) {
     };
 
     const handlePriorityChange = (id: string, priority: ToDoPriority) => {
-        project.updateToDo(id, { priority });
+        project.updateToDoPriority(id, priority);
         onUpdate();
     };
 
     return (
-        <div className="dashboard-card" style={{ flexGrow: 1 }}>
+        <>
             {isFormOpen && (
                 <TodoForm
-                    onClose={() => {
-                        setIsFormOpen(false);
-                        setTodoToEdit(undefined);
-                    }}
                     onSubmit={handleFormSubmit}
+                    onClose={handleFormClose}
                     todoToEdit={todoToEdit}
                 />
             )}
-            <div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '20px 30px',
-                    borderBottom: '2px solid #3b3c3f'
-                }}
-            >
-                <h4>To-Do</h4>
-                <SearchBox 
-                    onChange={setSearchQuery} 
-                    placeholder="Search todos..." 
-                />
-                <button id="ToDoAdd-Btn" onClick={handleAddTodo}>
-                    <span className="material-symbols-rounded">add</span>
-                    Add
-                </button>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 30px" }}>
+                <h3>To-Do's</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px' }}>
+                    <SearchBox onChange={setSearchQuery} placeholder="Search To-Do's..." />
+                    <span
+                        className="material-symbols-rounded"
+                        onClick={handleAddTodo}
+                        style={{ cursor: 'pointer' }}
+                    >
+                        add
+                    </span>
+                </div>
             </div>
-            <div style={{ padding: '20px 30px', display: 'flex', flexDirection: 'column', rowGap: '15px' }}>
-                {filteredTodos.length > 0 ? (
-                    filteredTodos.map(todo => (
-                        <ToDoCard
-                            key={todo.id}
-                            todo={todo}
-                            onEdit={handleEditTodo}
-                            onStatusChange={handleStatusChange}
-                            onToggleComplete={handleToggleComplete}
-                            onPriorityChange={handlePriorityChange}
-                        />
-                    ))
-                ) : (
-                    <p style={{ color: '#969696', textAlign: 'center' }}>
-                        {searchQuery ? 'No todos match your search.' : 'No todos yet. Add one!'}
-                    </p>
-                )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '10px 30px' }}>
+                {filteredTodos.map(todo => (
+                    <ToDoCard
+                        key={todo.id}
+                        todo={todo}
+                        onEdit={handleEditTodo}
+                        onStatusChange={handleStatusChange}
+                        onToggleComplete={handleToggleComplete}
+                        onPriorityChange={handlePriorityChange}
+                    />
+                ))}
             </div>
-        </div>
+        </>
     );
 }
