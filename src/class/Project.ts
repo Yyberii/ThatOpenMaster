@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 //* OWNS PROJECT DATA
 export type ProjectStatus = "Pending" | "Active" | "Finished"
 export type UserRole = "Architect" | "Engineer" | "Developer"
+export type ToDoPriority = "Low" | "Medium" | "High"
 
 export interface IProject {
   name: string
@@ -42,6 +43,9 @@ export interface IToDo {
   dueDate: Date
   completed: boolean
   status: ProjectStatus
+  priority?: ToDoPriority
+  cost?: number
+  progress?: number
 }
 
 const DEFAULT_FINISH_DATE = new Date(
@@ -99,13 +103,16 @@ export class Project implements IProject {
     this.id = uuidv4()
   }
 
-  addToDo(title: string, dueDate: Date, status: ProjectStatus = "Pending"): IToDo {
+  addToDo(title: string, dueDate: Date, status: ProjectStatus = "Pending", priority: ToDoPriority = "Medium", cost: number = 0, progress: number = 0): IToDo {
     const todo: IToDo = {
       id: uuidv4(),
       title,
       dueDate,
       completed: false,
-      status
+      status,
+      priority,
+      cost,
+      progress
     }
     this.todos.push(todo)
     return todo

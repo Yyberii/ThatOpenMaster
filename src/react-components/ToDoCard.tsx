@@ -82,7 +82,7 @@ export function ToDoCard({ todo, onEdit, onStatusChange, onToggleComplete, onPri
                                 onClick={(e) => e.stopPropagation()}
                                 onChange={handlePriorityChange}
                                 style={{ 
-                                    ...getPriorityStyle(todo.priority),
+                                    ...getPriorityStyle(todo.priority ?? 'Low'),
                                     padding: '4px 8px', 
                                     borderRadius: '5px', 
                                     fontSize: '12px',

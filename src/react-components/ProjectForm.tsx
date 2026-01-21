@@ -22,7 +22,9 @@ export function ProjectForm(props: Props) {
             description: "",
             status: "Pending",
             userRole: "Architect",
-            finishDate: new Date()
+            finishDate: new Date(),
+            cost: 0,
+            progress: 0
         };
     });
 
@@ -89,6 +91,29 @@ export function ProjectForm(props: Props) {
                     <div className="form-field-container">
                         <label htmlFor="finishDate"><span className="material-symbols-rounded">calendar_month</span>Finish Date</label>
                         <input name="finishDate" type="date" value={finishDateString} onChange={handleDateChange} />
+                    </div>
+                    <div className="form-field-container">
+                        <label><span className="material-symbols-rounded">euro</span>Cost</label>
+                        <input 
+                            name="cost" 
+                            type="number" 
+                            min={0}
+                            placeholder="Project cost"
+                            value={formData.cost || 0} 
+                            onChange={handleInputChange} 
+                        />
+                    </div>
+                    <div className="form-field-container">
+                        <label><span className="material-symbols-rounded">trending_up</span>Progress (%)</label>
+                        <input 
+                            name="progress" 
+                            type="number" 
+                            min={0}
+                            max={100}
+                            placeholder="Project progress"
+                            value={formData.progress || 0} 
+                            onChange={handleInputChange} 
+                        />
                     </div>
                     <div style={{ display: "flex", margin: "10px 0px 10px auto", columnGap: 10 }}>
                         <button id="cancel-btn" type="button" style={{ backgroundColor: "transparent" }} onClick={props.onClose}>

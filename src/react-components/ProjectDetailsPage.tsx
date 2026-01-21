@@ -3,13 +3,14 @@ import * as Router from 'react-router-dom';
 import { ProjectsManager } from '../class/ProjectsManager'
 import { useErrorModal } from './ErrorPage'
 import { ProjectEditBtn } from './ProjectEditBtn'
-import { ProjectEditPage } from './ProjectEditPage'
+import { ProjectForm } from './ProjectForm'
 import { Project, IProject } from '../class/Project'
-import { ToDoAdd } from './ToDos'
+import { IToDo } from '../class/Project'
 import { ToDoManager } from '../class/ToDoManager'
 import { ThreeViewer } from './ThreeViewer'
 import { deleteDocument } from '../firebase';
 import { updateDocument } from '../firebase';
+import { TodoForm } from './ToDoForm'
 
 interface Props {
   projectsManager: ProjectsManager
@@ -23,7 +24,6 @@ export function ProjectDetailsPage(props: Props) {
   const [showTodoForm, setShowTodoForm] = React.useState(false)
   const [todos, setTodos] = React.useState<any[]>([])
   const [todoManager, setTodoManager] = React.useState<any>(null)
-  const [formData, setFormData] = React.useState({ title: '', date: '', status: 'Pending' as 'Pending' | 'Active' | 'Finished' })
   const { show: showError } = useErrorModal()
 
   const navigateTo = Router.useNavigate()
@@ -65,7 +65,7 @@ export function ProjectDetailsPage(props: Props) {
     setIsEditing(true)
   }
 
-  const handleSave = (formData: any) => {
+  const handleSave = (formData: IProject) => {
     props.projectsManager.updateProject(project.id, formData)
     setIsEditing(false)
   }
@@ -78,18 +78,23 @@ export function ProjectDetailsPage(props: Props) {
     setShowTodoForm(true)
   }
 
-  const handleTodoSubmit = () => {
-    if (formData.title.trim() && formData.date && todoManager) {
-      todoManager.addToDo(formData.title, new Date(formData.date), formData.status)
+  const handleTodoSubmit = (todoData: Partial<IToDo>) => {
+    if (todoData.title?.trim() && todoData.dueDate && todoManager) {
+      todoManager.addToDo(
+        todoData.title, 
+        todoData.dueDate, 
+        todoData.status || 'Pending',
+        todoData.priority || 'Medium',
+        todoData.cost || 0,
+        todoData.progress || 0
+      )
       setTodos([...project.todos])
       setShowTodoForm(false)
-      setFormData({ title: '', date: '', status: 'Pending' })
     }
   }
 
   const handleTodoCancel = () => {
     setShowTodoForm(false)
-    setFormData({ title: '', date: '', status: 'Pending' })
   }
 
   const handleTodoToggle = (todoId: string) => {
@@ -108,11 +113,18 @@ export function ProjectDetailsPage(props: Props) {
 
 
   if (isEditing) {
-    return <ProjectEditPage project={project} onSave={handleSave} onCancel={handleCancel} />
+    return <ProjectForm projectToEdit={project} onSubmit={handleSave} onClose={handleCancel} />
   }
 
   return (
     <div className="page" id="project-details">
+      {isEditing && (
+        <ProjectForm 
+          projectToEdit={project} 
+          onSubmit={handleSave} 
+          onClose={handleCancel} 
+        />
+      )}
       <header>
         <div>
           <h2 data-project-info="name">{project.name}</h2>
@@ -233,7 +245,14 @@ export function ProjectDetailsPage(props: Props) {
                     style={{ width: "100%" }}
                   />
                 </div>
-                <ToDoAdd onClick={handleAddClick} />
+                <span
+                  id="ToDoAdd-Btn"
+                  className="material-symbols-rounded"
+                  onClick={handleAddClick}
+                  style={{ cursor: 'pointer' }}
+                >
+                  add
+                </span>
               </div>
             </div>
             <div
@@ -245,32 +264,10 @@ export function ProjectDetailsPage(props: Props) {
               }}
             >
               {showTodoForm && (
-                <div style={{ display: "flex", gap: 8, padding: "10px 0", alignItems: "center", flexWrap: "wrap" }}>
-                  <input 
-                    type="text" 
-                    placeholder="What needs to be done?"
-                    value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    style={{ flex: 1, minWidth: 180, padding: 6, borderRadius: 5, border: '1px solid #404040', background: '#2a2a2a', color: 'white' }}
-                  />
-                  <input 
-                    type="date" 
-                    value={formData.date}
-                    onChange={(e) => setFormData({...formData, date: e.target.value})}
-                    style={{ padding: 6, borderRadius: 5, border: '1px solid #404040', background: '#2a2a2a', color: 'white' }}
-                  />
-                  <select 
-                    value={formData.status}
-                    onChange={(e) => setFormData({...formData, status: e.target.value as any})}
-                    style={{ padding: 6, borderRadius: 5, border: '1px solid #404040', background: '#2a2a2a', color: 'white' }}
-                  >
-                    <option value="Pending">Pending</option>
-                    <option value="Active">Active</option>
-                    <option value="Finished">Finished</option>
-                  </select>
-                  <button onClick={handleTodoSubmit} style={{ padding: '6px 12px', backgroundColor: 'rgb(18, 145, 18)', borderRadius: 5, border: 'none', color: 'white', cursor: 'pointer' }}>Add</button>
-                  <button onClick={handleTodoCancel} style={{ padding: '6px 12px', backgroundColor: 'transparent', border: '1px solid #404040', borderRadius: 5, color: 'white', cursor: 'pointer' }}>Cancel</button>
-                </div>
+                <TodoForm 
+                  onSubmit={handleTodoSubmit} 
+                  onClose={handleTodoCancel} 
+                />
               )}
               {todos.map(todo => (
                 <div key={todo.id} className="todo-item">

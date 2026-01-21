@@ -7,6 +7,7 @@ import { ProjectCard } from "./ProjectCard"
 import { useErrorModal } from "./ErrorPage"
 import { SearchBox } from "./SearchBox"
 import { getCollection } from '../firebase';
+import { ProjectForm } from './ProjectForm';
 
 interface Props {
   projectsManager: ProjectsManager
@@ -68,45 +69,18 @@ export function ProjectsPage(props: Props) {
   }, [projects]) 
 
   const onNewProjectClick = () => {
-    const modal = document.getElementById("new-project-model")
-    if (!(modal && modal instanceof HTMLDialogElement)) { return }
-    modal.showModal()
+    setShowProjectForm(true)
   }
 
   const onCancelClick = () => {
-    const modal = document.getElementById("new-project-model")
-    if (!(modal && modal instanceof HTMLDialogElement)) { return }
-    modal.close()
+    setShowProjectForm(false)
   }
 
-  const onFormSubmit = (e: React.FormEvent) => {
-    const projectForm = document.getElementById("new-project-form")
-    if (!(projectForm && projectForm instanceof HTMLFormElement)) {return}
-    e.preventDefault()
-    const formData = new FormData(projectForm)
-
-    const finishDateValue = formData.get("finishDate") as string;
-    let finishDate = new Date();
-    if (finishDateValue) {
-      finishDate = new Date(finishDateValue);
-    } else {
-      finishDate.setDate(finishDate.getDate() + 30);
-    }
-
-    const projectData: IProject = {
-      name: formData.get("name") as string,
-      description: formData.get("description") as string,
-      status: formData.get("status") as ProjectStatus,
-      userRole: formData.get("userRole") as UserRole,
-      finishDate: finishDate
-    }
+  const onFormSubmit = async (projectData: IProject) => {
     try {
       const project = props.projectsManager.newProject(projectData)
-      FireStore.addDoc(projectsCollection, projectData)
-      projectForm.reset()
-      const modal = document.getElementById("new-project-model")
-      if (!(modal && modal instanceof HTMLDialogElement)) { return }
-      modal.close()
+      await FireStore.addDoc(projectsCollection, projectData)
+      setShowProjectForm(false)
     } catch (err) {
       showError(err instanceof Error ? err.message : String(err))
     }
@@ -124,10 +98,23 @@ export function ProjectsPage(props: Props) {
     setProjects(props.projectsManager.filterProjects(value))
   }
 
+  const [showProjectForm, setShowProjectForm] = React.useState(false)
+
   return (
     <div className="page" id="projects-page" style={{ display: "flex" }}>
       <dialog id="new-project-model">
-        <form onSubmit={(e) => {onFormSubmit(e)}} id="new-project-form">
+        <form onSubmit={(e) => {
+          e.preventDefault()
+          const formData = new FormData(e.currentTarget)
+          const projectData: IProject = {
+            name: formData.get("name") as string,
+            description: formData.get("description") as string,
+            status: formData.get("status") as ProjectStatus,
+            userRole: formData.get("userRole") as UserRole,
+            finishDate: new Date(formData.get("finishDate") as string)
+          }
+          onFormSubmit(projectData)
+        }} id="new-project-form">
           <h2>New Project</h2>
           <div className="input-list">
             <div className="form-field-container">
@@ -242,6 +229,12 @@ export function ProjectsPage(props: Props) {
       {
         projects.length > 0 ? <div id="projects-list">{projectCards}</div> : <p style={{ textAlign: "center", color: "red", fontSize: "var(--font-large)" }}>No projects found.</p>
       } 
+      {showProjectForm && (
+        <ProjectForm 
+          onSubmit={onFormSubmit} 
+          onClose={onCancelClick} 
+        />
+      )}
     </div>
   )
 }
