@@ -17,14 +17,16 @@ export function ProjectForm(props: Props) {
                 finishDate: new Date(props.projectToEdit.finishDate)
             };
         }
+        const thirtyDaysFromNow = new Date();
+        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
         return {
             name: "",
             description: "",
             status: "Pending",
             userRole: "Architect",
-            finishDate: new Date(),
-            cost: 0,
-            progress: 0
+            finishDate: thirtyDaysFromNow,
+            cost: "" as any,
+            progress: "" as any
         };
     });
 
@@ -45,12 +47,11 @@ export function ProjectForm(props: Props) {
 
     const onFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const dataToSubmit = { ...formData };
-        if (!formData.finishDate || isNaN(new Date(formData.finishDate).getTime())) {
-            const thirtyDaysFromNow = new Date();
-            thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-            dataToSubmit.finishDate = thirtyDaysFromNow;
-        }
+        const dataToSubmit = {
+            ...formData,
+            cost: parseFloat(formData.cost as any) || 0,
+            progress: parseInt(formData.progress as any) || 0,
+        };
         props.onSubmit(dataToSubmit);
     };
 
@@ -99,7 +100,7 @@ export function ProjectForm(props: Props) {
                             type="number" 
                             min={0}
                             placeholder="Project cost"
-                            value={formData.cost || 0} 
+                            value={formData.cost} 
                             onChange={handleInputChange} 
                         />
                     </div>
@@ -111,7 +112,7 @@ export function ProjectForm(props: Props) {
                             min={0}
                             max={100}
                             placeholder="Project progress"
-                            value={formData.progress || 0} 
+                            value={formData.progress} 
                             onChange={handleInputChange} 
                         />
                     </div>
