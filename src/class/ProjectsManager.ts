@@ -1,5 +1,4 @@
 import { IProject, Project } from "./Project"
-// import { ToDoManager } from "./ToDoManager" // DELETE THIS LINE
 import * as FireStore from "firebase/firestore"
 import { getCollection } from "../firebase"
 

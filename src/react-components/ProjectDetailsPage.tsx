@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { ProjectsManager } from '../class/ProjectsManager'
 import { useErrorModal } from './ErrorPage'
-import { ProjectEditBtn } from './ProjectEditBtn'
 import { ProjectForm } from './ProjectForm'
 import { Project, IProject } from '../class/Project'
 import * as Router from "react-router-dom"
@@ -63,14 +62,13 @@ export function ProjectDetailsPage(props: Props) {
 
   const handleProjectUpdate = () => {
     // This function is called anytime a To-Do is changed.
-    // We'll update the state and save to Firebase here.
+    // Update the state and save to Firebase here.
     setProject(prev => {
       if (!prev) return null;
       
       // Create a new instance to refresh the UI correctly
       const updatedProject = new Project(prev);
 
-      // --- THIS IS THE FIX ---
       // Save the entire updated project, including the todos array, to Firebase.
       // We use the toJSON() method to ensure data is in a storable format.
       props.projectsManager.onProjectUpdated(updatedProject.id, updatedProject.toJSON());
@@ -124,7 +122,9 @@ export function ProjectDetailsPage(props: Props) {
               <p data-project-info="project-icon " className={`project-icon ${project.iconColorClass}`}>
                 {project.iconInitials}
               </p>
-              <ProjectEditBtn onClick={handleEditClick} />
+              <button id="edit-project-btn" className="edit-project-btn" onClick={handleEditClick}>
+                <span style={{ width: "100%" }}>Edit</span>
+              </button>
             </div>
             <div style={{ padding: "0 30px" }}>
               <div>

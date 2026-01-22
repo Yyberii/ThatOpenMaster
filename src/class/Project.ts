@@ -74,10 +74,9 @@ export class Project implements IProject {
     this.progress = data.progress || 0;
     // Prioritize the passed ID, then an existing ID, then generate a new one.
     this.id = id || (data as Project).id || uuidv4();
-    this.iconInitials = data.name.substring(0, 2).toUpperCase();
+    this.iconInitials = data.name.match(/\b\p{L}/gu)?.join("").toUpperCase() || "";
     this.iconColorClass = getColorClassFromText(data.name);
 
-    // --- THIS IS THE FIX ---
     // If the data has a 'todos' array (from Firebase or another Project instance),
     // process it and ensure dates are correctly converted.
     const sourceTodos = (data as any).todos;

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Project, IToDo, ProjectStatus, ToDoPriority } from '../class/Project';
 import { ToDoCard } from './ToDoCard';
 import { TodoForm } from './ToDoForm';
-import { SearchBox } from './SearchBox'; // Import SearchBox
+import { SearchBox } from './SearchBox';
 
 interface Props {
     project: Project;

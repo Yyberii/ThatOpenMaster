@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as Router from "react-router-dom"
 import * as FireStore from "firebase/firestore"
-import { IProject, Project, ProjectStatus, UserRole } from "../class/Project"
+import { IProject, Project } from "../class/Project"
 import { ProjectsManager } from "../class/ProjectsManager"
 import { ProjectCard } from "./ProjectCard"
 import { useErrorModal } from "./ErrorPage"
@@ -40,7 +40,7 @@ export function ProjectsPage(props: Props) {
         finishDate
       }
       try {
-        // Check by ID first, then by name as fallback
+        // Check by ID first, then by name
         let existingProject = props.projectsManager.getProject(doc.id)
         
         if (!existingProject) {
@@ -84,11 +84,10 @@ export function ProjectsPage(props: Props) {
 
   const onFormSubmit = async (projectData: IProject) => {
     try {
-      // --- THIS IS THE FIX ---
-      // 1. Add the project data to Firebase first to get the real document ID.
+      // Add the project data to Firebase first to get the real document ID.
       const docRef = await FireStore.addDoc(projectsCollection, projectData as any);
 
-      // 2. Use the real Firebase ID to create the project locally.
+      // Use the real Firebase ID to create the project locally.
       props.projectsManager.newProject(projectData, docRef.id);
       
       setShowProjectForm(false);

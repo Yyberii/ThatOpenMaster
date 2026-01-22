@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { IToDo, ToDoPriority, ProjectStatus } from '../class/Project';
+import { IToDo } from '../class/Project';
 
 interface Props {
     onClose: () => void;
