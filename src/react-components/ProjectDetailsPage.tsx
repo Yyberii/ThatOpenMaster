@@ -8,6 +8,9 @@ import { ThreeViewer } from './ThreeViewer'
 import { deleteDocument } from '../firebase';
 import { updateDocument } from '../firebase';
 import { ProjectTasksList } from './ProjectTasksList' // Add this import
+import { appIcons } from '../globals'
+import * as BUI from "@thatopen/ui"
+import * as TEMPLATES from "../ui-templates"
 
 interface Props {
   projectsManager: ProjectsManager
@@ -21,6 +24,39 @@ export function ProjectDetailsPage(props: Props) {
   const { show: showError } = useErrorModal()
 
   const navigateTo = Router.useNavigate()
+
+  const viewerGrid = React.useRef<BUI.Grid<["Main"]>>(null)
+  React.useEffect(() => {
+    const { current: grid } = viewerGrid
+    if (!grid) return
+
+    grid.elements = {
+      header: {
+        template: TEMPLATES.headerContainerTemplate,
+        initialState: {}
+      },
+      sidebar: {
+        template: TEMPLATES.sidebarContainerTemplate,
+        initialState: {}
+      },
+      componentsGrid: {
+        template: TEMPLATES.componentsGridTemplate,
+        initialState: {}
+      }
+    };
+
+    grid.layouts = {
+      Main: {
+        template: `
+          "header header" auto
+          "sidebar componentsGrid" 1fr
+          /auto 1fr
+        `,
+      },
+    }
+
+    grid.layout = "Main";
+  }, [])
   
   props.projectsManager.onProjectDeleted = async (id) => {
     await deleteDocument("projects", id)
@@ -72,28 +108,27 @@ export function ProjectDetailsPage(props: Props) {
       // Save the entire updated project, including the todos array, to Firebase.
       // We use the toJSON() method to ensure data is in a storable format.
       props.projectsManager.onProjectUpdated(updatedProject.id, updatedProject.toJSON());
-      
       return updatedProject;
     });
   };
 
-  if (hasError || !project) {
+  if (hasError) {
     return <></>
   }
   
-  if (isEditing) {
+  if (isEditing && project) {
     return <ProjectForm projectToEdit={project} onSubmit={handleSave} onClose={handleCancel} />
   }
 
   return (
-    <div className="page" id="project-details">
-      {isEditing && (
+    <bim-grid ref={viewerGrid} className="viewer-grid">
+      {/*isEditing && (
         <ProjectForm 
           projectToEdit={project} 
           onSubmit={handleSave} 
           onClose={handleCancel} 
         />
-      )}
+      )
       <header>
         <div>
           <h2 data-project-info="name">{project.name}</h2>
@@ -142,27 +177,27 @@ export function ProjectDetailsPage(props: Props) {
                 }}
               >
                 <div>
-                  <p style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
+                  <bim-label icon={appIcons.STATUS} style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
                     Status
-                  </p>
+                  </bim-label>
                   <p data-project-info="status">{project.status}</p>
                 </div>
                 <div>
-                  <p style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
+                  <bim-label icon={appIcons.COST} style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
                     Cost
-                  </p>
+                  </bim-label>
                   <p data-project-info="cost">{project.cost} €</p>
                 </div>
                 <div>
-                  <p style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
+                  <bim-label icon={appIcons.ROLE} style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
                     Role
-                  </p>
+                  </bim-label>
                   <p data-project-info="role">{project.userRole}</p>
                 </div>
                 <div>
-                  <p style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
+                  <bim-label icon={appIcons.DATE} style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
                     Finish Date
-                  </p>
+                  </bim-label>
                   <p data-project-info="finishDate">{project.finishDate.toISOString().split('T')[0]}</p>
                 </div>
               </div>
@@ -196,7 +231,7 @@ export function ProjectDetailsPage(props: Props) {
           </div>
         </div>
         <ThreeViewer />
-      </div>
-    </div>
+      </div>*/}
+    </bim-grid>
   )
 }

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { IToDo, ToDoPriority, ProjectStatus } from '../class/Project';
+import { appIcons } from '../globals';
 
 interface Props {
     todo: IToDo;
@@ -54,13 +55,13 @@ export function ToDoCard({ todo, onEdit, onStatusChange, onToggleComplete, onPri
         >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', columnGap: '15px', alignItems: 'center' }}>
-                    <span 
-                        className={`material-symbols-rounded ${getIconStatusClass(todo.status)}`} 
-                        style={{ padding: '20px', borderRadius: '20px' }}
+                    <bim-label  
+                        icon={appIcons.CONSTRUCTION} 
+                        class={`construction-icon ${getIconStatusClass(todo.status)}`} 
+                        style={{ padding: '10px', borderRadius: '10px' }}
                         onClick={handleIconClick}
                     >
-                        construction
-                    </span>
+                    </bim-label>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <p>
                             {todo.title}

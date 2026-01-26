@@ -1,4 +1,5 @@
 import * as Router from 'react-router-dom';
+import { appIcons } from '../globals';
 
 export function Sidebar() {
   return (
@@ -6,9 +7,9 @@ export function Sidebar() {
       <img id="company-logo" src="logo.svg" alt="Construction company" />
         <ul id="nav-buttons">
           <Router.Link to="/">
-          <li id="projects-nav-btn"><span className="material-symbols-rounded">apartment</span>Projects</li>
+            <bim-button icon={appIcons.PROJECT} label="Projects"></bim-button>
           </Router.Link>
-          <li><span className="material-symbols-rounded">account_circle</span>Users</li>
+            <bim-button icon={appIcons.USER} label="Users"></bim-button>
         </ul>
     </aside>
   )

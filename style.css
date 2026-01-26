@@ -9,13 +9,9 @@
     --background: #202124;
     --background-100: #26282B;
     --background-200: #3b3c3f;
-    --font-xs: 10px;
-    --font-sm: 12px;
-    --font-base: 14px;
-    --font-lg: 16px;
-    --font-xl: 18px;
-    --font-2xl: 20px;
-    --font-3xl: 22px;
+
+    --bim-ui-main-base: var(--primary);
+    --bim-ui-accent-base: var(--primary);
 }
 
 body {
@@ -28,6 +24,10 @@ body {
     margin: 0;
     padding : 0;
     }
+
+html {
+    font-size: 18px;
+}
 
 #app {
     display: grid;
@@ -53,6 +53,11 @@ h4  {
 }
 
 h5 {font-size: var(--font-lg);
+}
+
+a {
+    text-decoration: none;
+    color: white; 
 }
 
 button {
@@ -93,24 +98,10 @@ button:hover {
     height: 65px;
 }
 
-#nav-buttons a{
-    color: white;
+#nav-buttons bim-button {
+    --bim-label--c: white; /* This should set the button's text color to white */
+    background-color: transparent;
     text-decoration: none;
-}
-
-#nav-buttons li {
-    list-style: none;
-    padding: 15px;
-    border-radius: 10px;
-    font-size: var(--font-base);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    column-gap: 10px;
-}
-
-#nav-buttons li:hover {
-    background-color: var(--primary-400);
 }
 
 #projects-list a {
@@ -401,4 +392,7 @@ input:focus, textarea:focus, select:focus {
     border-radius: 16px;
 }
 
-
+.construction-icon {
+    --bim-icon--fz: 1.5rem; /* Controls the icon size */
+    --bim-icon--c: white; /* Controls the icon color */
+}
