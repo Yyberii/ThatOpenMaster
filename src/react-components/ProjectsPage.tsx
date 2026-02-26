@@ -9,7 +9,6 @@ import { SearchBox } from "./SearchBox"
 import { getCollection } from '../firebase';
 import { ProjectForm } from './ProjectForm';
 import { appIcons } from '../globals';
-import { color } from 'three/examples/jsm/nodes/Nodes.js';
 
 interface Props {
   projectsManager: ProjectsManager

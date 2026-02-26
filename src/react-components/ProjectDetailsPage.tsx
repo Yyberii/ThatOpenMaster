@@ -11,6 +11,9 @@ import { ProjectTasksList } from './ProjectTasksList' // Add this import
 import { appIcons } from '../globals'
 import * as BUI from "@thatopen/ui"
 import * as TEMPLATES from "../ui-templates"
+import { setupComponents } from '../bim-components/setup';
+import * as OBC from "@thatopen/components"
+import { ComponentsGrid } from '../ui-templates/grids/components/src'
 
 interface Props {
   projectsManager: ProjectsManager
@@ -24,38 +27,55 @@ export function ProjectDetailsPage(props: Props) {
   const { show: showError } = useErrorModal()
 
   const navigateTo = Router.useNavigate()
-
+  
   const viewerGrid = React.useRef<BUI.Grid<["Main"]>>(null)
-  React.useEffect(() => {
+  let engineManager: OBC.Components | null = null
+
+  const setupGrid = async () => {
     const { current: grid } = viewerGrid
     if (!grid) return
 
+    const { components, viewport } = await setupComponents()
+    engineManager = components
+
     grid.elements = {
-      header: {
-        template: TEMPLATES.headerContainerTemplate,
-        initialState: {}
-      },
       sidebar: {
-        template: TEMPLATES.sidebarContainerTemplate,
+        template: TEMPLATES.gridSidebarTemplate,
         initialState: {}
       },
       componentsGrid: {
         template: TEMPLATES.componentsGridTemplate,
-        initialState: {}
+        initialState: { components, viewport }
       }
     };
 
     grid.layouts = {
       Main: {
         template: `
-          "header header" auto
-          "sidebar componentsGrid" 1fr
-          /auto 1fr
+          "sidebar" auto
+          "componentsGrid" 1fr
+          /1fr
         `,
       },
     }
 
+    grid.addEventListener("elementcreated", (e: CustomEvent<BUI.
+    ElementCreatedEventDetail<ComponentsGrid>>) => {
+      const { name, element: componentsGrid } = e.detail
+      if (name !== "componentsGrid") return
+      grid.updateComponent.sidebar({ grid: componentsGrid })
+    })
+
     grid.layout = "Main";
+  }
+
+
+  React.useEffect(() => {
+    setupGrid()
+    return () => {
+      engineManager?.dispose()
+      engineManager = null
+    }
   }, [])
   
   props.projectsManager.onProjectDeleted = async (id) => {

@@ -1,3 +1,4 @@
 export * from "./viewport";
-export * from "./header";
+export * from "./viewport-toolbar";
+export * from "./grid-sidebar";
 export * from "./sidebar";

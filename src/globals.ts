@@ -10,4 +10,18 @@ export const appIcons = {
   UPLOAD:"mdi:upload",
   PROJECT:"clarity:building-line",
   USER:"lsicon:user-like-filled",
+  SELECTION: "ri:ball-pen-fill",
+  MODELS: "material-symbols:house",
+  SELECT: "solar:cursor-bold",
+  COLORIZE: "famicons:color-fill",
+  APPLY: "ri:magic-fill",
+  CLEAR: "mingcute:broom-fill",
+  SHOW: "mdi:eye",
+  HIDE: "mdi:eye-off",
+  ISOLATE: "mdi:selection-ellipse",
+  TRANSPARENT: "mdi:ghost",
+  REFRESH: "radix-icons:update",
+  FOCUS: "ri:focus-mode",
+  VIEWER: "mdi:video-3d",
+  QUERIES: "mdi:clipboard-list"
 }

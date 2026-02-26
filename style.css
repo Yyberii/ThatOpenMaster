@@ -31,7 +31,7 @@ html {
 
 #app {
     display: grid;
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: 12rem 1fr;
     grid-template-areas: "sidebar content";
     height: 100vh;
     background-color: var(--background);
@@ -87,7 +87,7 @@ button:hover {
 /* Sidebar styles */
 
 #sidebar {
-    background-color: var(--background-100);
+    border-right: 1px solid var(--bim-ui_bg-contrast-40);
     padding: 25px;
     display: flex;
     flex-direction: column;
@@ -395,4 +395,69 @@ input:focus, textarea:focus, select:focus {
 .construction-icon {
     --bim-icon--fz: 1.5rem; /* Controls the icon size */
     --bim-icon--c: white; /* Controls the icon color */
+}
+
+/* New styles */
+
+:root {
+    --bim-ui_bg-base: var(--background);
+}
+
+bim-grid {
+    background-color: transparent;
+}
+
+.components-grid {
+    gap: 1rem;
+}
+
+.components-grid, .viewport-grid {
+    padding: 1rem;
+}
+
+bim-panel-section {
+    --bim-panel-section_hc: var(--primary);
+    overflow: auto;
+}
+
+:not(bim-panel)>bim-panel-section {
+    border: 1px solid var(--bim-ui_bg-contrast-40);
+    border-radius: 0.25rem;
+}
+
+bim-panel-section>bim-table {
+    flex: 1;
+}
+
+bim-grid[floating] {
+    z-index: 100;
+}
+
+bim-table {
+    border-radius: var(--bim-ui_size-4xs);
+}
+
+bim-context-menu {
+    padding: 0.5rem;
+    background-color: var(--bim-ui_bg-base);
+    outline: 1px solid var(--bim-ui_bg-contrast-20);
+}
+
+.transparent {
+    background-color: transparent;
+}
+
+.viewport-container {
+    box-sizing: border-box;
+    position: relative;
+    border: 1px solid var(--bim-ui_bg-contrast-40);
+    border-radius: 0.25rem;
+    overflow: auto;
+    height: 100%;
+}
+
+bim-grid[floating]>bim-toolbar {
+    border: none;
+    justify-self: center;
+    outline: 1px solid var(--bim-ui_bg-contrast-40);
 }

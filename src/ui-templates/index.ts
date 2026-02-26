@@ -1,2 +1,3 @@
 export * from "./containers";
-export * from "./grids/components";
+export * from "./grids";
+export * from "./buttons";
