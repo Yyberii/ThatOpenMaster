@@ -8,6 +8,12 @@ import { ThreeViewer } from './ThreeViewer'
 import { deleteDocument } from '../firebase';
 import { updateDocument } from '../firebase';
 import { ProjectTasksList } from './ProjectTasksList' // Add this import
+import { appIcons } from '../globals'
+import * as BUI from "@thatopen/ui"
+import * as TEMPLATES from "../ui-templates"
+import { setupComponents } from '../bim-components/setup';
+import * as OBC from "@thatopen/components"
+import { ComponentsGrid } from '../ui-templates/grids/components/src'
 
 interface Props {
   projectsManager: ProjectsManager
@@ -21,6 +27,56 @@ export function ProjectDetailsPage(props: Props) {
   const { show: showError } = useErrorModal()
 
   const navigateTo = Router.useNavigate()
+  
+  const viewerGrid = React.useRef<BUI.Grid<["Main"]>>(null)
+  let engineManager: OBC.Components | null = null
+
+  const setupGrid = async () => {
+    const { current: grid } = viewerGrid
+    if (!grid) return
+
+    const { components, viewport } = await setupComponents()
+    engineManager = components
+
+    grid.elements = {
+      sidebar: {
+        template: TEMPLATES.gridSidebarTemplate,
+        initialState: {}
+      },
+      componentsGrid: {
+        template: TEMPLATES.componentsGridTemplate,
+        initialState: { components, viewport }
+      }
+    };
+
+    grid.layouts = {
+      Main: {
+        template: `
+          "sidebar" auto
+          "componentsGrid" 1fr
+          /1fr
+        `,
+      },
+    }
+
+    grid.addEventListener("elementcreated", (e: CustomEvent<BUI.
+    ElementCreatedEventDetail<ComponentsGrid>>) => {
+      const { name, element: componentsGrid } = e.detail
+      if (name !== "componentsGrid") return
+      grid.updateComponent.sidebar({ grid: componentsGrid })
+    })
+
+    grid.layout = "Main";
+  }
+
+
+  React.useEffect(() => {
+    setupGrid()
+    return () => {
+      engineManager?.dispose()
+      engineManager = null
+    }
+  }, [])
   
   props.projectsManager.onProjectDeleted = async (id) => {
     await deleteDocument("projects", id)
@@ -72,28 +128,27 @@ export function ProjectDetailsPage(props: Props) {
       // Save the entire updated project, including the todos array, to Firebase.
       // We use the toJSON() method to ensure data is in a storable format.
       props.projectsManager.onProjectUpdated(updatedProject.id, updatedProject.toJSON());
-      
       return updatedProject;
     });
   };
 
-  if (hasError || !project) {
+  if (hasError) {
     return <></>
   }
   
-  if (isEditing) {
+  if (isEditing && project) {
     return <ProjectForm projectToEdit={project} onSubmit={handleSave} onClose={handleCancel} />
   }
 
   return (
-    <div className="page" id="project-details">
-      {isEditing && (
+    <bim-grid ref={viewerGrid} className="viewer-grid">
+      {/*isEditing && (
         <ProjectForm 
           projectToEdit={project} 
           onSubmit={handleSave} 
           onClose={handleCancel} 
         />
-      )}
+      )
       <header>
         <div>
           <h2 data-project-info="name">{project.name}</h2>
@@ -142,27 +197,27 @@ export function ProjectDetailsPage(props: Props) {
                 }}
               >
                 <div>
-                  <p style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
+                  <bim-label icon={appIcons.STATUS} style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
                     Status
-                  </p>
+                  </bim-label>
                   <p data-project-info="status">{project.status}</p>
                 </div>
                 <div>
-                  <p style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
+                  <bim-label icon={appIcons.COST} style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
                     Cost
-                  </p>
+                  </bim-label>
                   <p data-project-info="cost">{project.cost} €</p>
                 </div>
                 <div>
-                  <p style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
+                  <bim-label icon={appIcons.ROLE} style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
                     Role
-                  </p>
+                  </bim-label>
                   <p data-project-info="role">{project.userRole}</p>
                 </div>
                 <div>
-                  <p style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
+                  <bim-label icon={appIcons.DATE} style={{ color: "#969696", fontSize: "var(--font-sm)" }}>
                     Finish Date
-                  </p>
+                  </bim-label>
                   <p data-project-info="finishDate">{project.finishDate.toISOString().split('T')[0]}</p>
                 </div>
               </div>
@@ -196,7 +251,7 @@ export function ProjectDetailsPage(props: Props) {
           </div>
         </div>
         <ThreeViewer />
-      </div>
-    </div>
+      </div>*/}
+    </bim-grid>
   )
 }

@@ -5,7 +5,20 @@ import { ProjectsPage } from "./react-components/ProjectsPage"
 import { ErrorModalProvider } from "./react-components/ErrorPage"
 import { ProjectDetailsPage } from "./react-components/ProjectDetailsPage"
 import { ProjectsManager } from "./class/ProjectsManager"
+import * as BUI from "@thatopen/ui"
 
+BUI.Manager.init()
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      "bim-label": any;
+      "bim-button": any;
+      "bim-text-input": any;
+      "bim-grid": any;
+    }
+  }
+}
 
 const projectsManager = new ProjectsManager()
 

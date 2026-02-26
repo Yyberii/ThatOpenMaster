@@ -1,13 +1,11 @@
 import { initializeApp } from "firebase/app";
-import * as FireStore from "firebase/firestore"
+import * as FireStore from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
+import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY, 
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: "bim-dev-master-86225.firebasestorage.app",
@@ -17,18 +15,29 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const firebaseDB = getFirestore(app)
+
+// 🔐 AUTH — runs once, silently
+const auth = getAuth(app);
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    signInAnonymously(auth).catch(console.error);
+  }
+});
+
+// 🔥 Firestore
+export const firebaseDB = getFirestore(app);
 
 export function getCollection<T>(path: string) {
-  return FireStore.collection(firebaseDB, path) as FireStore.CollectionReference<T>
+  return FireStore.collection(firebaseDB, path) as FireStore.CollectionReference<T>;
 }
 
 export async function deleteDocument(path: string, id: string) {
-  const doc = FireStore.doc(firebaseDB,`${path}/${id}`)
-  await FireStore.deleteDoc(doc)
+  const doc = FireStore.doc(firebaseDB, `${path}/${id}`);
+  await FireStore.deleteDoc(doc);
 }
 
 export async function updateDocument<T extends Record<string, any>>(path: string, id: string, data: T) {
-  const doc = FireStore.doc(firebaseDB, `${path}/${id}`)
-  await FireStore.updateDoc(doc, data)
+  const doc = FireStore.doc(firebaseDB, `${path}/${id}`);
+  await FireStore.updateDoc(doc, data);
 }

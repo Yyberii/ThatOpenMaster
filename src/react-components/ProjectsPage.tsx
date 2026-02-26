@@ -8,6 +8,7 @@ import { useErrorModal } from "./ErrorPage"
 import { SearchBox } from "./SearchBox"
 import { getCollection } from '../firebase';
 import { ProjectForm } from './ProjectForm';
+import { appIcons } from '../globals';
 
 interface Props {
   projectsManager: ProjectsManager
@@ -117,30 +118,14 @@ export function ProjectsPage(props: Props) {
   return (
     <div className="page" id="projects-page" style={{ display: "flex" }}>
       <header>
-        <h2>Projects</h2>
+        <bim-label style={{ fontSize: "1.3rem", color: "white" }}>Projects List</bim-label>
         <div style={{ width: "40%" }}>
           <SearchBox onChange={(value) => onProjectSearch(value)} />
         </div>
         <div style={{ display: "flex", alignItems: "center", columnGap: 15 }}>
-          <span 
-            id="import-projects-btn"
-            className="material-symbols-rounded"
-            style={{ textAlign: "center" }}
-            onClick={onImportProject}
-          >
-            upload<div style={{ fontSize: "small" }}>Upload</div>
-          </span>
-          <span 
-            id="export-projects-btn"
-            className="material-symbols-rounded"
-            style={{ textAlign: "center" }}
-            onClick={onExportProject}
-          >
-            download<div style={{ fontSize: "small" }}>Download</div>
-          </span>
-          <button onClick={onNewProjectClick} id="new-project-btn">
-            <span className="material-symbols-rounded">add</span>New project
-          </button>
+          <bim-button onclick={onImportProject} icon={appIcons.UPLOAD} label="Upload"></bim-button>
+          <bim-button onclick={onExportProject} icon={appIcons.DOWNLOAD} label="Download"></bim-button>
+          <bim-button onclick={onNewProjectClick} icon={appIcons.ADD} label="New project"></bim-button>
         </div>
       </header>
       {
