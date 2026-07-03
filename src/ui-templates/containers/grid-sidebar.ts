@@ -21,7 +21,7 @@ export const gridSidebarTemplate: BUI.StatefullComponent<GridSidebarState> = (
         update()
       }
       return BUI.html`
-            <bim-button ?active=${grid.layout === layout} @click=${onClick} style="flex: 0" icon=${grid.layouts[layout].icon} label=${layout}></bim-button> 
+            <bim-button ?active=${grid.layout === layout} @click=${onClick} style="flex: 0" label=${layout}></bim-button> 
           `;
     })}
       </div>

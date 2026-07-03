@@ -59,8 +59,7 @@ export function ProjectDetailsPage(props: Props) {
       },
     }
 
-    grid.addEventListener("elementcreated", (e: CustomEvent<BUI.
-    ElementCreatedEventDetail<ComponentsGrid>>) => {
+    grid.addEventListener("elementcreated", (e: CustomEvent<BUI.ElementCreatedEventDetail<ComponentsGrid>>) => {
       const { name, element: componentsGrid } = e.detail
       if (name !== "componentsGrid") return
       grid.updateComponent.sidebar({ grid: componentsGrid })
